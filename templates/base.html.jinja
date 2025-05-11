@@ -1,0 +1,214 @@
+{% macro alert_block(text, type='warning') -%}
+<div class="alert alert-{{ type }}" role="alert">
+    {{ text }}
+</div>
+{%- endmacro %}
+
+<!doctype html>
+<html lang="ru" data-bs-theme="light"> 
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Светлая тема с приглушенными цветами и темная тема */
+        :root {
+            --bg-color: #f9fafb; /* Светлый фон */
+            --text-color: #212529; /* Темный текст */
+            --navbar-bg: #414f57; /* Цвет навигационной панели */
+            --sidebar-bg: #ffffff; /* Цвет бокового меню */
+            --link-color: #007bff; /* Цвет ссылок */
+            --btn-bg: #15c6b9; /* Цвет кнопок */
+            --btn-bg-hover: #01a8e5; /* Цвет кнопок */
+            --icon-color: #6c757d; /* Приглушенный цвет иконок */
+            --table-left-padding: 1.0rem;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-color: #212529; /* Темный фон */
+            --text-color: #f8f9fa; /* Светлый текст */
+            --navbar-bg: #343a40; /* Темная навигационная панель */
+            --sidebar-bg: #343a40; /* Темное боковое меню */
+            --link-color: #0dcaf0; /* Цвет ссылок в темной теме */
+            --btn-bg: #0dcaf0; /* Цвет кнопок в темной теме */
+            --btn-bg-hover: #15c6b9; /* Цвет кнопок */
+            --icon-color: #adb5bd; /* Цвет иконок в темной теме */
+        }
+
+        body {
+            padding-top: 56px; /* Отступ для фиксированной навигационной панели */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Стили для навбара */
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            transition: background-color 0.3s;
+        }
+
+        /* Стили для бокового меню */
+        .offcanvas {
+            background-color: var(--sidebar-bg) !important;
+            color: var(--text-color);
+        }
+
+        /* Стили для иконок помощи */
+        .help-icon {
+            color: var(--icon-color); /* Приглушенный цвет иконок */
+            font-size: 0.9em; /* Уменьшенный размер иконки */
+            margin-left: 5px; /* Отступ от текста */
+        }
+
+        /* Стили для кнопок */
+        .btn-custom {
+            background-color: var(--btn-bg);
+            color: #fff;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: var(--btn-bg-hover);
+            color: #fff;
+        }
+
+        /* Кастомный спойлер-информация */
+        .info-accordion {
+            --bs-accordion-color: var(--bs-primary-text-emphasis);
+            --bs-accordion-bg: var(--bs-primary-bg-subtle);
+        }
+
+        /* Кастомная таблица с боковыми границами*/
+        .tab-content-custom {
+            border-left: var(--bs-border-width) solid var(--bs-border-color);
+            border-right: var(--bs-border-width) solid var(--bs-border-color);
+        }
+
+        /* Стили для основного контента */
+        .graph-container {
+            width: 100%;
+            /*display: flex;
+            justify-content: center;
+            margin-bottom: 20px;*/
+        }
+
+        /* Стили для заголовка с ссылкой */
+        .header-with-link {
+            display: flex;
+            align-items: center;
+            /* margin-bottom: 20px; */
+        }
+        .header-with-link a {
+            margin-right: 15px;
+            /* color: var(--text-color); */
+            text-decoration: none;
+            font-size: 1.5rem;
+        }
+        .header-with-link a:hover {
+            text-decoration: underline;
+        }
+        g > text {
+            fill: var(--text-color) !important;
+        }
+    </style>
+    {% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <button class="btn btn-custom me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar">
+                ☰ Меню
+            </button>
+            <!-- <a class="navbar-brand" href="">Timeline</a> -->
+            {% block navbargadget %}
+            {% endblock %}
+            <button class="btn btn-custom ms-3" id="theme-toggle" aria-label="Переключить тему">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarLabel">Меню</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item bg-transparent border-0"><a href="timeline" class="text-decoration-none">Timeline</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="container mt-4">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    {% block additionalscripts %}
+    <script>
+        // Инициализация всех tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Функция для установки темы
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme); // Устанавливаем тему
+            document.getElementById('theme-toggle').innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+
+        // Обработчик кнопки переключения темы
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            let theme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+            setTheme(theme);
+            localStorage.setItem("theme", theme);
+        });
+
+        // Установка темы при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem("theme") || 'light';
+            setTheme(savedTheme);
+        });
+
+        // Костыль, чтобы при нажатии на любой элемент легенды переключались 
+        // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
+        document.addEventListener('DOMContentLoaded', function () {
+            var gd = document.getElementById('9cc162d8-61cf-4829-aede-73d8b3495197');
+            gd.on('plotly_legendclick', function (data) {
+                var legend_item_name = data.node.__data__[0].trace.name
+                if (legend_item_name === 'Overdue' || legend_item_name === 'Pause') {
+                    let updates = {}
+                    for (var i = 0; i < data.fullLayout.shapes.length; i++) {
+                        if (data.fullLayout.shapes[i].name == legend_item_name) {
+                            var nextVisibility;
+                            switch (data.fullLayout.shapes[i].visible) {
+                                case true:
+                                    nextVisibility = "legendonly";
+                                    break;
+                                case false:
+                                    nextVisibility = false;
+                                    break;
+                                case "legendonly":
+                                    nextVisibility = true;
+                                    break;
+                            }
+                            updates[`shapes[${i}].visible`] = nextVisibility
+                        }
+                    }
+                    Plotly.relayout(gd, updates);
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>

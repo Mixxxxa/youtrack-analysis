@@ -1,0 +1,338 @@
+{% macro badge(text, bg_color, hover_text='', fg_color='#fff') -%}
+{% if hover_text %}
+<span class="badge" data-bs-html="true" data-bs-toggle="tooltip" title="{{ hover_text }}" style="background-color: {{ bg_color }}; color: {{ fg_color }}; margin-left: 0.5rem;">{{ text }}</span>
+{% else %}
+<span class="badge" style="background-color: {{ bg_color }}; color: {{ fg_color }}; margin-left: 0.5rem;">{{ text }}</span>
+{%endif%}
+{%- endmacro %}
+
+{% extends "base.html.jinja" %}
+{% block head %}
+{{ super() }}
+<title>{{ summary }} - Timeline</title>
+{% endblock %}
+{% block navbargadget %}
+<a class="navbar-brand" href="timeline">Timeline</a>
+<form class="d-flex ms-auto" method="GET" action="">
+    <input class="form-control me-2" type="text" name="issue" placeholder="Введите id задачи..."
+        aria-label="Введите id задачи..." required>
+    <button class="btn btn-success" type="submit">Перейти</button>
+</form>
+{% endblock %}
+{% block content %}
+<div class="header-with-link">
+    <a href="{{ issue_url }}" target="_blank"><i class="fas fa-link"></i></a>
+    <h1>{{ summary }}</h1>
+</div>
+<div class="badges mt-2">
+{% if is_resolved %}
+{{ badge(text='Закрыто', bg_color='var(--bs-secondary)') }}
+{% else %}
+{{ badge(text='В работе', bg_color='var(--bs-success)') }}
+{% endif %}
+{% if yt_errors %}
+{% set _yt_error_text = 'Во время получения данных из YouTrack обнаружены ошибки. Следующие данные могут быть неточными: ' ~ yt_errors|join(', ') ~ '.' %}
+{{ badge(text='Обнаружены ошибки YT API', bg_color='var(--bs-danger)', hover_text=_yt_error_text) }}
+{% endif %}
+<span style="display:inline-block; border-left: 1px solid #ccc; height: 1.5rem; vertical-align: middle; margin-left: 0.5rem;"></span>
+{% for tag in tags %}
+{{ badge(text=tag.text, bg_color=tag.bg_color, fg_color=tag.fg_color) }}
+{% endfor %}
+</div>
+<div class="graph-container">
+    <div id="graph">{{ graph_div | safe }}</div>
+</div>
+<div class="row">
+    <div class="col">
+        <p><b>Автор:</b> {{ author }}</p>
+        <p><b>Создано:</b> {{ creation_datetime }}</p>
+        <p><b>Scope:</b> {{ scope if scope else '-'}}</p>
+        <p><b>Spent Time:</b> {{ spent_time }}</p>
+        <p><b>State:</b> {{ state }}</p>
+    </div>
+    <div class="col">
+        <p><b>Количество Overdue:</b> {{ overdues|count }}</p>
+        <p><b>Превышение Scope:</b> {{ scope_overrun if scope_overrun else '-' }} <a href="#" data-bs-toggle="tooltip" title="(SpentTime-Scope)"
+                class="help-icon"><i class="fas fa-question-circle"></i></a></p>
+        <p><b>Время реакции:</b> {{ reaction_time if reaction_time else '-'}}<a href="#" data-bs-toggle="tooltip"
+                title="Время от создания задачи до взятия в работу (первого перехода в In progress)"
+                class="help-icon"><i class="fas fa-question-circle"></i></a></p>
+        <p><b>Время решения задачи:</b> {{ resolution_time if resolution_time else '-'}} <a href="#" data-bs-toggle="tooltip"
+                title="Фактическое время от создания задачи до её закрытия" class="help-icon"><i
+                    class="fas fa-question-circle"></i></a></p>
+    </div>
+</div>
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-tab-pane"
+            type="button" role="tab" aria-controls="details-tab-pane" aria-selected="true">Сводная таблица</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="by-people-tab" data-bs-toggle="tab" data-bs-target="#by-people-tab-pane"
+            type="button" role="tab" aria-controls="by-people-tab-pane" aria-selected="false">По людям</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="by_type-tab" data-bs-toggle="tab" data-bs-target="#by_type-tab-pane"
+            type="button" role="tab" aria-controls="by_type-tab-pane" aria-selected="false">По типам</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-tab-pane" type="button"
+            role="tab" aria-controls="comments-tab-pane" aria-selected="false">
+            Комментарии
+            <span class="badge text-bg-secondary">{{ comments | count }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pauses-tab" data-bs-toggle="tab" data-bs-target="#pauses-tab-pane" type="button"
+            role="tab" aria-controls="pauses-tab-pane" aria-selected="false">
+            Простои
+            <span class="badge text-bg-secondary">{{ pauses.entries | count }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="overdues-tab" data-bs-toggle="tab" data-bs-target="#overdues-tab-pane"
+            type="button" role="tab" aria-controls="overdues-tab-pane" aria-selected="false">
+            Overdue
+            <span class="badge text-bg-{{ 'danger' if overdues|count > 0 else 'secondary' }}">{{ overdues|count }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="subtasks-tab" data-bs-toggle="tab" data-bs-target="#subtasks-tab-pane"
+            type="button" role="tab" aria-controls="subtasks-tab-pane" aria-selected="false">
+            Подзадачи
+            <span class="badge text-bg-secondary">{{ subtasks.entries|count }}</span>
+        </button>
+    </li>
+</ul>
+<div class="tab-content tab-content-custom" id="myTabContent">
+    <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Spent Time (1d=8h)</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for entry in tables.detailed %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
+                    <td>{{entry.state}}</td>
+                    <td>{{entry.spent_time}}</td>
+                    <td>{{entry.percent}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col">{{ spent_time }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="by-people-tab-pane" role="tabpanel" aria-labelledby="by-people-tab" tabindex="0">
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th scope="col">Spent Time (1d=8h)</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for entry in tables.by_people %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
+                    <td>{{entry.spent_time}}</td>
+                    <td>{{entry.percent}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">{{ spent_time }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="by_type-tab-pane" role="tabpanel" aria-labelledby="by_type-tab" tabindex="0">
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">State</th>
+                    <th scope="col">Spent Time (1d=8h)</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for entry in tables.by_type %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.state}}</th>
+                    <td>{{entry.spent_time}}</td>
+                    <td>{{entry.percent}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">{{ spent_time }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="comments-tab-pane" role="tabpanel" aria-labelledby="comments-tab" tabindex="0">
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th scope="col">Дата</th>
+                    <th scope="col">Текст</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for entry in comments %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.author}}</th>
+                    <td>{{entry.creation_datetime}}</td>
+                    <td>{{entry.text}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="pauses-tab-pane" role="tabpanel" aria-labelledby="pauses-tab" tabindex="0">
+        <div class="accordion accordion-flush info-accordion" id="accordionExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Что такое простои (паузы)?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                        Паузы в работе — это то время, пока задача находится в <strong>On
+                            hold</strong>.<br />Графа <code>Фактическое время</code> показывает физическое
+                        время между этими датами. Графа <code>Только рабочее время</code> выбирает из
+                        <code>Фактическое время</code> промежутки с понедельника по пятницу с 9:00-13:00 и
+                        14:00-18:00 без учета праздничных дней.<br />
+                        <strong>Примечание</strong>: разница в одну секунду между рабочим и фактическим временем связана с 
+                        особенностями подсчета (округлением до минут).
+                    </div>
+                </div>
+            </div>
+        </div>
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th scope="col">Начало</th>
+                    <th scope="col">Конец</th>
+                    <th scope="col">Фактическое время (1d=24h)</th>
+                    <th scope="col">Только рабочее время (1d=8h)</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for item in pauses.entries %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{item.name}}</th>
+                    <td>{{item.begin}}</td>
+                    <td>{{item.end}}</td>
+                    <td>{{item.duration}}</td>
+                    <td>{{item.duration_business}}</td>
+                    <td>{{item.percents}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col">{{pauses.total}}</th>
+                    <th scope="col">{{pauses.total_business}}</th>
+                    <th scope="col"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="overdues-tab-pane" role="tabpanel" aria-labelledby="overdues-tab" tabindex="0">
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th scope="col">Дата</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for item in overdues %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{item.name}}</th>
+                    <td>{{item.date}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="tab-pane fade" id="subtasks-tab-pane" role="tabpanel" aria-labelledby="subtasks-tab" tabindex="0">
+        <div class="accordion accordion-flush info-accordion" id="accordionExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Как подзадачи влияют на Spent Time?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                        YouTrack неявно добавляет <code>Spent Time</code> каждой подзадачи в общий <code>Spent Time</code>. 
+                        Из-за этого, может показаться что задача затянулась, а по факту, время накапало вообще в другом месте.
+                        Таблица ниже показывает каждую подзадачу (если есть), а также её <code>Spent Time</code> и процент от общего.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <table class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">id</th>
+                    <th scope="col">Название</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Spent Time (1d=8h)</th>
+                    <th scope="col">%</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for item in subtasks.entries %}
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="row">{{item.id}}</th>
+                    <td>{{item.title}}</td>
+                    <td>{{item.state}}</td>
+                    <td>{{item.spent_time}}</td>
+                    <td>{{item.percent}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-group-divider">
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col"></th>
+                    <th scope="col">{{subtasks.total}}</th>
+                    <th scope="col"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

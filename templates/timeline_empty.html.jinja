@@ -1,0 +1,42 @@
+{% extends "base.html.jinja" %}
+{% block head %}
+{{ super() }}
+<title>Timeline</title>
+{% endblock %}
+{% block navbargadget %}
+<a class="navbar-brand" href="">Timeline</a>
+{% endblock %}
+{% block content %}
+{{ alert_block(notification_text, 'danger' if is_error else 'warning')}}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <form id="redirectForm" class="input-group mb-3">
+            <input type="text" id="issueInput" class="form-control" placeholder="Введите id задачи..." aria-label="Введите id задачи" required>
+            <button type="submit" class="btn btn-success">Перейти</button>
+        </form>
+        <div class="text-muted">
+            <p>Примеры корректного ввода:</p>
+            <ul>
+                <li><a href="timeline?issue=https://{{ host_name }}/youtrack/issue/id-11963" class="text-decoration-none">https://{{ host_name }}/youtrack/issue/id-11963</a></li>
+                <li><a href="timeline?issue=id-11963" class="text-decoration-none">id-11963</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block additionalscripts %}
+{{ super() }}
+<script>
+// Обработчик отправки формы для переадресации
+    document.getElementById('redirectForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Предотвращаем стандартное поведение формы
+        let issueValue = document.getElementById('issueInput').value.trim();
+        if (issueValue) {
+            // Формируем URL и производим переадресацию
+            let targetUrl = 'http://127.0.0.1:8080/timeline?issue=' + encodeURIComponent(issueValue);
+            window.location.href = targetUrl;
+        }
+    });
+</script>
+{% endblock %}
