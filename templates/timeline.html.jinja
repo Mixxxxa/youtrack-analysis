@@ -13,10 +13,9 @@
 {% endblock %}
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
-<form class="d-flex ms-auto" method="GET" action="">
-    <input class="form-control me-2" type="text" name="issue" placeholder="Введите id задачи..."
-        aria-label="Введите id задачи..." required>
-    <button class="btn btn-success" type="submit">Перейти</button>
+<form class="input-group ms-auto" method="GET" action="" style="width: auto">
+    <input type="text" name="issue" class="form-control" placeholder="Введите id задачи..." aria-label="Введите id задачи" required>
+    <button type="submit" class="btn btn-success">Перейти</button>
 </form>
 {% endblock %}
 {% block content %}
@@ -335,4 +334,40 @@
         </table>
     </div>
 </div>
+{% endblock %}
+{% block additionalscripts %}
+{{ super() }}
+<script>
+    // Костыль, чтобы при нажатии на любой элемент легенды переключались 
+    // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
+    document.addEventListener('DOMContentLoaded', function () {
+        var gd = document.getElementById('9cc162d8-61cf-4829-aede-73d8b3495197');
+        gd.on('plotly_legendclick', function (data) {
+            var legend_item_name = data.node.__data__[0].trace.name
+            if (legend_item_name === 'Overdue' || legend_item_name === 'Pause') {
+                let updates = {}
+                for (var i = 0; i < data.fullLayout.shapes.length; i++) {
+                    if (data.fullLayout.shapes[i].name == legend_item_name) {
+                        var nextVisibility;
+                        switch (data.fullLayout.shapes[i].visible) {
+                            case true:
+                                nextVisibility = "legendonly";
+                                break;
+                            case false:
+                                nextVisibility = false;
+                                break;
+                            case "legendonly":
+                                nextVisibility = true;
+                                break;
+                        }
+                        updates[`shapes[${i}].visible`] = nextVisibility
+                    }
+                }
+                Plotly.relayout(gd, updates);
+                return false;
+            }
+            return true;
+        });
+    });
+</script>
 {% endblock %}

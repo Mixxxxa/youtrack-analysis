@@ -171,9 +171,6 @@ def get_timeline_page_data(issue_id: str, tz: timezone):
             name='Взято в работу', 
             legendgroup="milestones"
         )
-    fig.update_xaxes(range=[data.creation_datetime.to_datetime(tz), 
-                            data.resolve_datetime.to_datetime(tz) if data.is_finished else yt.Timestamp.now().to_datetime(tz)],
-                     rangeslider_visible=True)
     fig.update_yaxes(showgrid=True)
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
@@ -184,20 +181,9 @@ def get_timeline_page_data(issue_id: str, tz: timezone):
         yaxis_title=None
     )
     fig.update_xaxes(
-        rangeslider_visible=True,
-        tickformatstops = [
-            dict(dtickrange=[60000, 3600000], value="%d %b %H:%M"),
-            dict(dtickrange=[3600000, 86400000], value="%d %b %H:%M"),
-            dict(dtickrange=[86400000, 604800000], value="%d %b %H:%M"),
-            dict(dtickrange=[604800000, "M1"], value="%e. %b w"),
-            dict(dtickrange=["M1", "M12"], value="%b '%y M"),
-            dict(dtickrange=["M12", None], value="%Y Y")
-        ]
-    )
-    fig.update_xaxes(
-        ticks= "outside",
-        ticklabelmode= "period", 
-        tickcolor= "black", 
+        ticks="outside",
+        ticklabelmode="period", 
+        tickcolor="black", 
         ticklen=10, 
         minor=dict(
             ticklen=4,  
@@ -205,7 +191,20 @@ def get_timeline_page_data(issue_id: str, tz: timezone):
             tick0="2016-07-03", 
             griddash='dot', 
             gridcolor='white'
-        )
+        ),
+        range=[
+            data.creation_datetime.to_datetime(tz), 
+            data.resolve_datetime.to_datetime(tz) if data.is_finished else yt.Timestamp.now().to_datetime(tz)
+        ],
+        rangeslider_visible=True,
+        tickformatstops=[
+            dict(dtickrange=[60000, 3600000], value="%d %b %H:%M"),
+            dict(dtickrange=[3600000, 86400000], value="%d %b %H:%M"),
+            dict(dtickrange=[86400000, 604800000], value="%d %b %H:%M"),
+            dict(dtickrange=[604800000, "M1"], value="%e. %b w"),
+            dict(dtickrange=["M1", "M12"], value="%b '%y M"),
+            dict(dtickrange=["M12", None], value="%Y Y")
+        ]
     )
     template_data = dict(
         issue_url=config.get_issue_url(issue_id),
@@ -273,7 +272,10 @@ if __name__ == "__main__":
     app.config['yt-config'] = config
 
     if config.debug:
+        app.config["TEMPLATES_AUTO_RELOAD"] = True
+        app.jinja_env.auto_reload = True
         app.run(debug=True, port=config.port)
     else:
         #TODO: https://flask.palletsprojects.com/en/stable/deploying/
         app.run(debug=False, host='0.0.0.0', port=config.port)
+                       

@@ -10,8 +10,8 @@
     {% block head %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         /* Светлая тема с приглушенными цветами и темная тема */
         :root {
@@ -22,6 +22,8 @@
             --link-color: #007bff; /* Цвет ссылок */
             --btn-bg: #15c6b9; /* Цвет кнопок */
             --btn-bg-hover: #01a8e5; /* Цвет кнопок */
+            --bs-btn-active-bg: #0a97b4;
+            --bs-btn-active-color: #fff;
             --icon-color: #6c757d; /* Приглушенный цвет иконок */
             --table-left-padding: 1.0rem;
         }
@@ -32,8 +34,10 @@
             --navbar-bg: #343a40; /* Темная навигационная панель */
             --sidebar-bg: #343a40; /* Темное боковое меню */
             --link-color: #0dcaf0; /* Цвет ссылок в темной теме */
-            --btn-bg: #0dcaf0; /* Цвет кнопок в темной теме */
-            --btn-bg-hover: #15c6b9; /* Цвет кнопок */
+            --btn-bg: #15c6b9; /* Цвет кнопок в темной теме */
+            --btn-bg-hover: #0dcaf0; /* Цвет кнопок */
+            --bs-btn-active-bg: #0a97b4;
+            --bs-btn-active-color: #fff;
             --icon-color: #adb5bd; /* Цвет иконок в темной теме */
         }
 
@@ -90,9 +94,6 @@
         /* Стили для основного контента */
         .graph-container {
             width: 100%;
-            /*display: flex;
-            justify-content: center;
-            margin-bottom: 20px;*/
         }
 
         /* Стили для заголовка с ссылкой */
@@ -113,7 +114,83 @@
         g > text {
             fill: var(--text-color) !important;
         }
+        .dropdown-item-checked::before {
+            position: absolute;
+            left: .4rem;
+            content: '✓';
+            font-weight: 600;
+        }
     </style>
+    <script>
+        (() => {
+            'use strict'
+
+            const getStoredTheme = () => localStorage.getItem('theme')
+            const setStoredTheme = theme => localStorage.setItem('theme', theme)
+
+            const getPreferredTheme = () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme) {
+                    return storedTheme
+                }
+
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            }
+
+            const setTheme = theme => {
+                if (theme === 'auto') {
+                    document.documentElement.setAttribute('data-bs-theme', (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme)
+                }
+            }
+
+            const updateThemeSwitcher = theme => {
+                const themeSwitcher = document.getElementById('theme-switcher')
+                if (!themeSwitcher) {
+                    return
+                }
+                if(theme === 'auto') {
+                    themeSwitcher.innerHTML = '<i class="bi bi-circle-half"></i>'
+                } else if(theme == 'light') {
+                    themeSwitcher.innerHTML = '<i class="bi bi-moon-stars-fill"></i>'
+                } else if(theme == 'dark') {
+                    themeSwitcher.innerHTML = '<i class="bi bi-brightness-high-fill"></i>'
+                }
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active')
+                    element.setAttribute('aria-pressed', 'false')
+                })
+
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                btnToActive.classList.add('active')
+                btnToActive.setAttribute('aria-pressed', 'true')
+            }
+
+            setTheme(getPreferredTheme())
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme())
+                }
+            })
+
+            window.addEventListener('DOMContentLoaded', () => {
+                updateThemeSwitcher(getPreferredTheme())
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            const theme = toggle.getAttribute('data-bs-theme-value')
+                            setStoredTheme(theme)
+                            setTheme(theme)
+                            updateThemeSwitcher(theme)
+                        })
+                    })
+            })
+        })()
+    </script>
     {% endblock %}
 </head>
 <body>
@@ -122,12 +199,34 @@
             <button class="btn btn-custom me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar">
                 ☰ Меню
             </button>
-            <!-- <a class="navbar-brand" href="">Timeline</a> -->
             {% block navbargadget %}
             {% endblock %}
-            <button class="btn btn-custom ms-3" id="theme-toggle" aria-label="Переключить тему">
-                <i class="fas fa-moon"></i>
-            </button>
+            <div class="d-flex">
+                <div class="dropdown">
+                    <button class="btn btn-custom ms-2 dropdown-toggle" type="button" id="theme-switcher" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-circle-half"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-theme-value="light">
+                                <i class="bi bi-brightness-high-fill me-2 opacity-50"></i> Светлая
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-theme-value="dark">
+                                <i class="bi bi-moon-stars-fill me-2 opacity-50"></i> Тёмная
+                            </a>
+                        </li>
+                        <li><a class="dropdown-item" href="#" data-bs-theme-value="auto">
+                                <i class="bi bi-circle-half me-2 opacity-50"></i> Как в системе
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <a class="btn btn-custom ms-2" href="https://github.com/Mixxxxa/youtrack-analysis" target="_blank" role="button">
+                    <i class="bi bi-github"></i> GitHub
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -149,64 +248,12 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     {% block additionalscripts %}
     <script>
         // Инициализация всех tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Функция для установки темы
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-bs-theme', theme); // Устанавливаем тему
-            document.getElementById('theme-toggle').innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        }
-
-        // Обработчик кнопки переключения темы
-        document.getElementById('theme-toggle').addEventListener('click', function() {
-            let theme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
-            setTheme(theme);
-            localStorage.setItem("theme", theme);
-        });
-
-        // Установка темы при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem("theme") || 'light';
-            setTheme(savedTheme);
-        });
-
-        // Костыль, чтобы при нажатии на любой элемент легенды переключались 
-        // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
-        document.addEventListener('DOMContentLoaded', function () {
-            var gd = document.getElementById('9cc162d8-61cf-4829-aede-73d8b3495197');
-            gd.on('plotly_legendclick', function (data) {
-                var legend_item_name = data.node.__data__[0].trace.name
-                if (legend_item_name === 'Overdue' || legend_item_name === 'Pause') {
-                    let updates = {}
-                    for (var i = 0; i < data.fullLayout.shapes.length; i++) {
-                        if (data.fullLayout.shapes[i].name == legend_item_name) {
-                            var nextVisibility;
-                            switch (data.fullLayout.shapes[i].visible) {
-                                case true:
-                                    nextVisibility = "legendonly";
-                                    break;
-                                case false:
-                                    nextVisibility = false;
-                                    break;
-                                case "legendonly":
-                                    nextVisibility = true;
-                                    break;
-                            }
-                            updates[`shapes[${i}].visible`] = nextVisibility
-                        }
-                    }
-                    Plotly.relayout(gd, updates);
-                    return false;
-                }
-                return true;
-            });
         });
     </script>
     {% endblock %}
