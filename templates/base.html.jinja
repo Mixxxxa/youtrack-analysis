@@ -133,8 +133,7 @@
                 if (storedTheme) {
                     return storedTheme
                 }
-
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+                return 'auto'
             }
 
             const setTheme = theme => {
@@ -153,9 +152,9 @@
                 if(theme === 'auto') {
                     themeSwitcher.innerHTML = '<i class="bi bi-circle-half"></i>'
                 } else if(theme == 'light') {
-                    themeSwitcher.innerHTML = '<i class="bi bi-moon-stars-fill"></i>'
-                } else if(theme == 'dark') {
                     themeSwitcher.innerHTML = '<i class="bi bi-brightness-high-fill"></i>'
+                } else if(theme == 'dark') {
+                    themeSwitcher.innerHTML = '<i class="bi bi-moon-stars-fill"></i>'
                 }
 
                 document.querySelectorAll('[data-bs-theme-value]').forEach(element => {

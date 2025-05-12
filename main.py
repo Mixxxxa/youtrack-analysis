@@ -262,7 +262,7 @@ def timeline():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     arg_parser = argparse.ArgumentParser(description='Collects information about YoutTrack issue and visualize it')
     arg_parser.add_argument('-c', '--config', required=True, type=pathlib.Path, help='Configuration file')
