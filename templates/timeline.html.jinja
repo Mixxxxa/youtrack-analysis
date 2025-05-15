@@ -20,7 +20,7 @@
 {% endblock %}
 {% block content %}
 <div class="header-with-link">
-    <a href="{{ issue_url }}" target="_blank"><i class="fas fa-link"></i></a>
+    <a href="{{ issue_url }}" target="_blank"><i class="bi bi-link-45deg"></i></a>
     <h1>{{ summary }}</h1>
 </div>
 <div class="badges mt-2">
@@ -52,13 +52,13 @@
     <div class="col">
         <p><b>Количество Overdue:</b> {{ overdues|count }}</p>
         <p><b>Превышение Scope:</b> {{ scope_overrun if scope_overrun else '-' }} <a href="#" data-bs-toggle="tooltip" title="(SpentTime-Scope)"
-                class="help-icon"><i class="fas fa-question-circle"></i></a></p>
+                class="help-icon"><i class="bi bi-question-circle-fill"></i></a></p>
         <p><b>Время реакции:</b> {{ reaction_time if reaction_time else '-'}}<a href="#" data-bs-toggle="tooltip"
                 title="Время от создания задачи до взятия в работу (первого перехода в In progress)"
-                class="help-icon"><i class="fas fa-question-circle"></i></a></p>
+                class="help-icon"><i class="bi bi-question-circle-fill"></i></a></p>
         <p><b>Время решения задачи:</b> {{ resolution_time if resolution_time else '-'}} <a href="#" data-bs-toggle="tooltip"
                 title="Фактическое время от создания задачи до её закрытия" class="help-icon"><i
-                    class="fas fa-question-circle"></i></a></p>
+                    class="bi bi-question-circle-fill"></i></a></p>
     </div>
 </div>
 <ul class="nav nav-tabs" id="myTab" role="tablist">
