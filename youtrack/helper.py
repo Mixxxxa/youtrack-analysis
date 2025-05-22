@@ -1,15 +1,12 @@
 import requests
-import re
 import typing as t
 from .config import YouTrackConfig
 from .entities import IssueInfo
-from .utils import InvalidIssueIdError, yt_logger, is_empty
+from .utils import InvalidIssueIdError, yt_logger, is_valid_issue_id, extract_issue_id_from_url
 from .parser import IssueParser
-from urllib.parse import urlparse,parse_qs
+
 
 class ApiHelper:
-    issue_re = re.compile(r'^id-\d{4,5}$')
-
     def __init__(self, config: YouTrackConfig):
         self.__config = config
 
@@ -27,35 +24,12 @@ class ApiHelper:
         rsp.raise_for_status()
         return rsp.json()
 
-    def is_valid_issue_id(self, id: str) -> bool:
-        return self.issue_re.match(id)
-    
     def extract_issue_id(self, text: str) -> str | None:
         # Try as ID
-        if self.is_valid_issue_id(text):
+        if is_valid_issue_id(text):
             return text
         # Try as URL
-        try:
-            parts = urlparse(text)
-            if parts.scheme != 'https':
-                return None
-            if parts.hostname is None or parts.hostname != self.__config.host:
-                return None
-            if parts.path is None or is_empty(parts.path):
-                return None
-            
-            if parts.path.startswith('/youtrack/agiles/') and not is_empty(parts.query):
-                query_parts = parse_qs(qs=parts.query)
-                if 'issue' in query_parts and self.is_valid_issue_id(query_parts['issue'][0]):
-                    return query_parts['issue'][0]
-                
-            if parts.path.startswith('/youtrack/issue/'):
-                path_parts = [s for s in str.split(parts.path, sep='/') if not is_empty(s.strip())]
-                if len(path_parts) > 2 and self.is_valid_issue_id(path_parts[2]):
-                    return path_parts[2]
-        except:
-            pass
-        return None
+        return extract_issue_id_from_url(text, self.__config.host)
 
     def get_summary(self, id: str) -> IssueInfo:
         if (issue_id := self.extract_issue_id(id)) is None:
