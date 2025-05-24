@@ -265,3 +265,27 @@ def extract_issue_id_from_url(url: str, host: str) -> str | None:
     except:
         pass
     return None
+
+
+def issue_id_comparator(l: str, r: str) -> int:
+    l_parts, r_parts = l.lower().split('-'), r.lower().split('-')
+    assert len(l_parts) == 2 and len(r_parts) == 2 and l_parts[0].isascii() and r_parts[0].isascii()
+    
+    if l_parts[0] < r_parts[0]:
+        return -1
+    elif l_parts[0] > r_parts[0]:
+        return 1
+    else:
+        l_num, r_num = int(l_parts[1]), int(r_parts[1])
+        if l_num < r_num:
+            return -1
+        elif l_num > r_num:
+            return 1
+        else:
+            return 0
+        
+
+def issue_id_to_key(id: str) -> tuple[str, int]:
+    parts = id.lower().split('-')
+    assert len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit()
+    return (parts[0], int(parts[1]))
