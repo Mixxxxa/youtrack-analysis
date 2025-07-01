@@ -64,10 +64,17 @@ def get_timeline_page_data(issue_id: str, tz: timezone):
     config: yt.YouTrackConfig = app.config['yt-config']
     data = yt.ApiHelper(config=config).get_summary(id=issue_id)
 
-    df_workitems = pd.DataFrame([{'Assignee': i.name,
-                                  'Start': i.begin().to_datetime(tz),
-                                  'Finish': i.end().to_datetime(tz),
-                                  'State': i.state } for i in data.work_items])
+    # Quickfix if there are no workitems
+    df_workitems = pd.DataFrame({'Assignee': [],
+                                 'Start': [],
+                                 'Finish': [],
+                                 'State': []})
+    
+    if not yt.is_empty(data.work_items):
+        df_workitems = pd.DataFrame([{'Assignee': i.name,
+                                      'Start': i.begin().to_datetime(tz),
+                                      'Finish': i.end().to_datetime(tz),
+                                      'State': i.state } for i in data.work_items])
     
     df_comments = pd.DataFrame([{'date': i.timestamp.to_datetime(tz),
                                  'author': i.author,
