@@ -169,8 +169,8 @@ class IssueInfo(ShortIssueInfo):
         pauses = [{'name': i.name,
                    'begin': i.begin().format_ru(),
                    'end': i.end().format_ru(),
-                   'duration': i.duration.format_natural(),
-                   'duration_business': i.business_duration.format_business(),
+                   'duration': i.duration.format_yt_natural(),
+                   'duration_business': i.business_duration.format_yt(),
                    'percents': f'{i.business_duration.to_seconds() / pauses_total_business.to_seconds() * 100:.2f}'} for i in pauses_sorted]
 
         subtasks = []
@@ -180,7 +180,7 @@ class IssueInfo(ShortIssueInfo):
             subtasks.append({'id': i.id,
                              'title': i.summary,
                              'state': i.state,
-                             'spent_time': i.spent_time_yt.format_business(),
+                             'spent_time': i.spent_time_yt.format_yt(),
                              'percent': f'{i.spent_time_yt.to_seconds() / self.spent_time_yt.to_seconds() * 100:.2f}'})
 
         return {
@@ -193,7 +193,7 @@ class IssueInfo(ShortIssueInfo):
             'scope': self.scope.format_business() if self.scope else None,
             'scope_overrun': self.scope_overrun,
             'creation_datetime': self.creation_datetime.format_ru(),
-            'spent_time': self.spent_time.format_business(),
+            'spent_time': self.spent_time.format_yt(),
             'reaction_time': self.reaction_time.format_natural() if self.is_started else None,
             'resolution_time': self.resolution_time.format_natural() if self.is_finished else None,
 

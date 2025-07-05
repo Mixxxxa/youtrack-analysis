@@ -10,6 +10,7 @@
 {% block head %}
 {{ super() }}
 <title>{{ summary }} - Timeline</title>
+<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.css" rel="stylesheet" integrity="sha384-Zrj/as4Sl7o40iPyzYoRdGiqptjoy2C18Fll9i1ez3FkuwkcFRnV0c4ZeAlON/IL" crossorigin="anonymous">
 {% endblock %}
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
@@ -33,7 +34,9 @@
 {% set _yt_error_text = 'Во время получения данных из YouTrack обнаружены ошибки. Следующие данные могут быть неточными: ' ~ yt_errors|join(', ') ~ '.' %}
 {{ badge(text='Обнаружены ошибки YT API', bg_color='var(--bs-danger)', hover_text=_yt_error_text) }}
 {% endif %}
+{% if  comments | count %}
 <span style="display:inline-block; border-left: 1px solid #ccc; height: 1.5rem; vertical-align: middle; margin-left: 0.5rem;"></span>
+{% endif %}
 {% for tag in tags %}
 {{ badge(text=tag.text, bg_color=tag.bg_color, fg_color=tag.fg_color) }}
 {% endfor %}
@@ -71,10 +74,6 @@
             type="button" role="tab" aria-controls="by-people-tab-pane" aria-selected="false">По людям</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="by_type-tab" data-bs-toggle="tab" data-bs-target="#by_type-tab-pane"
-            type="button" role="tab" aria-controls="by_type-tab-pane" aria-selected="false">По типам</button>
-    </li>
-    <li class="nav-item" role="presentation">
         <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-tab-pane" type="button"
             role="tab" aria-controls="comments-tab-pane" aria-selected="false">
             Комментарии
@@ -105,7 +104,7 @@
 </ul>
 <div class="tab-content tab-content-custom" id="myTabContent">
     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
-        <table class="table table-hover table-sm caption-top">
+        <table id="details-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
@@ -117,10 +116,10 @@
             <tbody class="table-group-divider">
                 {% for entry in tables.detailed %}
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
+                    <td style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
                     <td>{{entry.state}}</td>
-                    <td>{{entry.spent_time}}</td>
-                    <td>{{entry.percent}}</td>
+                    <td data-order="{{entry.spent_time_order}}">{{entry.spent_time}}</td>
+                    <td data-order="{{entry.percent_order}}">{{entry.percent}}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -135,7 +134,7 @@
         </table>
     </div>
     <div class="tab-pane fade" id="by-people-tab-pane" role="tabpanel" aria-labelledby="by-people-tab" tabindex="0">
-        <table class="table table-hover table-sm caption-top">
+        <table id="by-people-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
@@ -147,33 +146,6 @@
                 {% for entry in tables.by_people %}
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
-                    <td>{{entry.spent_time}}</td>
-                    <td>{{entry.percent}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="table-group-divider">
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">{{ spent_time }}</th>
-                    <th scope="col"></th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    <div class="tab-pane fade" id="by_type-tab-pane" role="tabpanel" aria-labelledby="by_type-tab" tabindex="0">
-        <table class="table table-hover table-sm caption-top">
-            <thead>
-                <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">State</th>
-                    <th scope="col">Spent Time (1d=8h)</th>
-                    <th scope="col">%</th>
-                </tr>
-            </thead>
-            <tbody class="table-group-divider">
-                {% for entry in tables.by_type %}
-                <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.state}}</th>
                     <td>{{entry.spent_time}}</td>
                     <td>{{entry.percent}}</td>
                 </tr>
@@ -337,6 +309,7 @@
 {% endblock %}
 {% block additionalscripts %}
 {{ super() }}
+<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.js" integrity="sha384-4xQjfsQCLqbvY60PVYaHIfgkwnqil6HMK+EJgwE9qEp0nCIGa0fMxjOi0U2r/JFu" crossorigin="anonymous"></script>
 <script>
     // Костыль, чтобы при нажатии на любой элемент легенды переключались 
     // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
@@ -369,5 +342,98 @@
             return true;
         });
     });
+    // По умолчанию выравниваем все даные по левой стороне
+    DataTable.type('num', 'className', 'dt-body-left');
+    // Убираем отступ между заголовком и телом таблицы
+    DataTable.ext.classes.layout.row = 'row justify-content-between';
+    $(document).ready( function () {
+        $('#by-people-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            info: false,
+            columnDefs: [
+                { type: 'time-elapsed-dhms', targets: 1 }
+            ]
+        });
+    } );
+
+    /**
+    * Конвертирует секунды в рабочее время (дни, часы, минуты)
+    * @param {number} seconds - количество секунд для конвертации
+    * @param {boolean} isWorkingTime - флаг для переключения между рабочим временем (8ч/день) и календарным (24ч/день)
+    * @returns {string} строка в формате "1d 2h 30m"
+    */
+    function convertSecondsToWorkTime(seconds, isWorkingTime = true) {
+        // Проверяем входные данные
+        if (!Number.isInteger(seconds) || seconds < 0) {
+            throw new Error('Количество секунд должно быть неотрицательным целым числом');
+        }
+
+        const SECONDS_IN_MINUTE = 60;
+        const SECONDS_IN_HOUR = 60 * 60;
+        const HOURS_IN_DAY = isWorkingTime ? 8 : 24;
+        const SECONDS_IN_DAY = HOURS_IN_DAY * SECONDS_IN_HOUR;
+
+        const days = Math.floor(seconds / SECONDS_IN_DAY);
+        const remainingSecondsAfterDays = seconds % SECONDS_IN_DAY;
+        
+        const hours = Math.floor(remainingSecondsAfterDays / SECONDS_IN_HOUR);
+        const remainingSecondsAfterHours = remainingSecondsAfterDays % SECONDS_IN_HOUR;
+        
+        const minutes = Math.floor(remainingSecondsAfterHours / SECONDS_IN_MINUTE);
+
+        const parts = [];
+        if (days > 0) {
+            parts.push(`${days}d`);
+        }
+        if (hours > 0) {
+            parts.push(`${hours}h`);
+        }
+        if (minutes > 0) {
+            parts.push(`${minutes}m`);
+        }
+        return parts.length > 0 ? parts.join(' ') : '0m';
+    }
+
+    function addCell(tr, content, colSpan = 1) {
+        let td = document.createElement('th');
+        td.colSpan = colSpan;
+        td.textContent = content;
+        tr.appendChild(td);
+    }
+    $(document).ready( function () {
+        $('#details-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            info: false,
+            order: [],
+            rowGroup: {
+                dataSrc: 1,
+                startRender: function (rows, group) {
+                    let timeInPercent = rows.data()
+                                            .pluck(3)
+                                            .map((a => a['@data-order'] * 1))
+                                            .reduce((a, b) => a + b);
+                    timeInPercent = DataTable.render
+                        .number(null, null, 2, '', '%')
+                        .display(timeInPercent);
+        
+                    let businessTime = rows.data()
+                                           .pluck(2)
+                                           .map((a => a['@data-order']*1))
+                                           .reduce((a, b) => a + b);
+                    businessTime = convertSecondsToWorkTime(businessTime, true);
+
+                    let tr = document.createElement('tr');
+                    addCell(tr, 'Всего в ' + group, 2);
+                    addCell(tr, businessTime);
+                    addCell(tr, timeInPercent);
+                    return tr;
+                },
+            },
+        });
+    } );
 </script>
 {% endblock %}

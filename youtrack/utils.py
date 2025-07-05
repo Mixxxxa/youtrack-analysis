@@ -22,6 +22,8 @@ class ParsingError(RuntimeError):
 class Duration:
     class FormatType(enum.Enum):
         YouTrack = enum.auto() # С днями, в дне 8 часов, обозначения сокращены до одной буквы 
+        YouTrackNatural = enum.auto() # С днями, в дне 24 часа, обозначения сокращены до одной буквы 
+        # TODO: кажется остальное не сильно и нужно...
         Business = enum.auto() # С днями, в дне 8 часов
         Natural = enum.auto()  # С днями, в дне 24 часа
         Hours = enum.auto()    # Только часы и минуты
@@ -62,6 +64,9 @@ class Duration:
     def format_yt(self) -> str:
         return self.__format_impl(Duration.FormatType.YouTrack)
     
+    def format_yt_natural(self) -> str:
+        return self.__format_impl(Duration.FormatType.YouTrackNatural)
+    
     def format_hours(self) -> str:
         return self.__format_impl(Duration.FormatType.Hours)
     
@@ -69,8 +74,11 @@ class Duration:
         res = ''
         total_sec = int(self.__internal.total_seconds())
 
+        like_yt: bool = style in [Duration.FormatType.YouTrack, Duration.FormatType.YouTrackNatural]
+        like_natural: bool = style in [Duration.FormatType.Natural, Duration.FormatType.YouTrackNatural]
+
         if total_sec == 0:
-            return f'0m' if style == Duration.FormatType.YouTrack else '0 минут'
+            return f'0m' if like_yt else '0 минут'
         
         def append_str(text: str):
             nonlocal res
@@ -84,15 +92,15 @@ class Duration:
         SECONDS_IN_BUSINESS_DAY: int = SECONDS_IN_HOUR * 8
 
         if style != Duration.FormatType.Hours:
-            divider = SECONDS_IN_DAY if style == Duration.FormatType.Natural else SECONDS_IN_BUSINESS_DAY
+            divider = SECONDS_IN_DAY if like_natural else SECONDS_IN_BUSINESS_DAY
             if (days := total_sec // divider) != 0:
                 total_sec -= days * divider
-                append_str(f'{days}d' if style == Duration.FormatType.YouTrack else format_plural(days, ['день', 'дня', 'дней']))
+                append_str(f'{days}d' if like_yt else format_plural(days, ['день', 'дня', 'дней']))
         if (hours := total_sec // SECONDS_IN_HOUR) != 0:
             total_sec -= hours * SECONDS_IN_HOUR
-            append_str(f'{hours}h' if style == Duration.FormatType.YouTrack else format_plural(hours, ['час', 'часа', 'часов']))
+            append_str(f'{hours}h' if like_yt else format_plural(hours, ['час', 'часа', 'часов']))
         if (minutes := total_sec // SECONDS_IN_MINUTE) != 0:
-            append_str(f'{minutes}m' if style == Duration.FormatType.YouTrack else format_plural(minutes, ['минута', 'минуты', 'минут']))
+            append_str(f'{minutes}m' if like_yt else format_plural(minutes, ['минута', 'минуты', 'минут']))
         return res
 
 

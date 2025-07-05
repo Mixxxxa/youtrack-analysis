@@ -18,6 +18,7 @@ def test_format():
     value = yt.Duration(datetime.timedelta(days=1, hours=1, minutes=1, seconds=1))
     natural_format = '1 день 1 час 1 минута'
     assert value.format_yt() == '3d 1h 1m'
+    assert value.format_yt_natural() == '1d 1h 1m'
     assert value.format_business() == '3 дня 1 час 1 минута'
     assert value.format_natural() == natural_format
     assert value.format_hours() == '25 часов 1 минута'
