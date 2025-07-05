@@ -1,7 +1,9 @@
 from .entities import *
-from .utils import yt_logger, is_empty, ParsingError
+from .utils import yt_logger, is_empty
+from .utils.exceptions import ParsingError
 from .config import CustomFields
 from math import fabs
+from contextlib import contextmanager
 
 
 class IssueParser:
@@ -12,6 +14,7 @@ class IssueParser:
         # Parser state
         self.__parser_previous_on_hold_begin: Timestamp | None = None
         self.__parser_current_state: str | None = None
+        self.__parser_process_links: bool = False
         
         # Data
         self.__id: str | None = None
@@ -19,7 +22,9 @@ class IssueParser:
         self.__current_assignee: str | None = None
         self.__author: str | None = None
         self.__state: str | None = None
+        self.__component: str | None = None
         self.__scope: Duration | None = None
+        self.__project: Project | None = None
         self.__spent_time_yt: Duration | None = None
         self.__creation_datetime: Timestamp | None = None
         self.__resolve_datetime: Timestamp | None = None
@@ -30,8 +35,23 @@ class IssueParser:
         self.__pauses: list[WorkItem] = list()
         self.__assignees: list[ValueChangeEvent] = list()
         self.__subtasks: list[ShortIssueInfo] = list()
-        self.__yt_errors: list[str] = list()
+        self.__yt_errors: set[str] = set()
         self.__overdues: list[Event] = list()
+
+    @contextmanager
+    def __link_parse_guard(self, new_value: bool|None =None):
+        """Guard for automatic restore parser state after processing links
+        
+        It should be as separate class or func but the target value is private
+        TODO Test it somehow
+        """
+        original_value = self.__parser_process_links
+        try:
+            if new_value is not None:
+                self.__parser_process_links = new_value
+            yield self.__parser_process_links
+        finally:
+            self.__parser_process_links = original_value
 
     def __pre_parse_activities(self, json) -> None:
         # Проблемы которые не удалось решить парсингом в один проход:
@@ -83,8 +103,12 @@ class IssueParser:
         return state in [IssueState.InProgress, IssueState.Review]
 
     def __write_yt_error(self, text: str) -> None:
+        if self.__parser_process_links:
+            yt_logger.debug(f"Ignoring YouTrack API error in link. Possible error with field: '{text}'")
+            return
+        
         yt_logger.warning(f"Detected YouTrack API error. Possible error with field: '{text}'")
-        self.__yt_errors.append(text)
+        self.__yt_errors.add(text)
 
     def __parse_short_info(self, issue_info) -> ShortIssueInfo:
         """ Parse info
@@ -97,6 +121,8 @@ class IssueParser:
         subtasks: list['ShortIssueInfo'] = list()
         current_assignee: str = UNASSIGNED_NAME
         state: str | None = None
+        component: str | None = None
+        project: Project | None = None
         
         for i in issue_info['customFields']:
             name, value = i['name'], i['value']
@@ -115,6 +141,12 @@ class IssueParser:
                     self.__write_yt_error(f'Превышение Scope')
             elif field == self.__custom_fields.spent_time and value is not None:
                 spent_time = Duration.from_minutes(int(value['minutes']))
+            elif field == self.__custom_fields.component:
+                component = value['name']
+
+        if 'project' in issue_info:
+            project = Project(short_name=issue_info['project']['shortName'],
+                              name=issue_info['project']['name'])
 
         for i in issue_info['tags']:
             tags.append(Tag(name=i['name'], 
@@ -126,23 +158,29 @@ class IssueParser:
                                     author=i['author']['fullName'],
                                     text=i['text']))
 
-        if 'links' in issue_info:
-            for entry in issue_info['links']:
-                if entry['direction'] == 'OUTWARD' and entry['linkType']['sourceToTarget'] == 'parent for':
-                    for i in entry['issues']:
-                        subtasks.append(self.__parse_short_info(i))
+        # Parse links with guard
+        if not self.__parser_process_links and 'links' in issue_info:
+            with self.__link_parse_guard(True):
+                for entry in issue_info['links']:
+                    if entry['direction'] == 'OUTWARD' and entry['linkType']['sourceToTarget'] == 'parent for':
+                        for i in entry['issues']:
+                            subtasks.append(self.__parse_short_info(i))
         
-        return ShortIssueInfo(id=issue_info['idReadable'],
-                              summary=issue_info['summary'],
-                              author=issue_info['reporter']['fullName'],
-                              creation_datetime=Timestamp.from_yt(issue_info['created']),
-                              scope=scope,
-                              spent_time_yt=spent_time if spent_time is not None else Duration(),
-                              tags=tags,
-                              comments=comments,
-                              subtasks=subtasks,
-                              state=state,
-                              current_assignee=current_assignee)
+        return ShortIssueInfo(
+            id=issue_info['idReadable'],
+            summary=issue_info['summary'],
+            author=issue_info['reporter']['fullName'],
+            creation_datetime=Timestamp.from_yt(issue_info['created']),
+            scope=scope,
+            spent_time_yt=spent_time if spent_time is not None else Duration(),
+            tags=tags,
+            comments=comments,
+            subtasks=subtasks,
+            state=state,
+            current_assignee=current_assignee,
+            component=component,
+            project=project
+        )
 
     def parse_custom_fields(self, entry) -> None:
         info = self.__parse_short_info(entry)
@@ -156,6 +194,8 @@ class IssueParser:
         self.__tags = info.tags
         self.__comments = info.comments
         self.__subtasks = info.subtasks
+        self.__component = info.component
+        self.__project = info.project
 
     def __parse_activity(self, entry) -> None:
         timestamp = Timestamp.from_yt(entry['timestamp'])
@@ -215,8 +255,32 @@ class IssueParser:
         for i in self.__subtasks:
             total_spent_time += i.spent_time_yt
         
+        # Если посчитанное нами и YT время не сходится, то нужно исследовать причину
+        # Иногда случается из-за того что подзадачу слинковали не сразу, а поэтому 
+        # нужно выявлять этот момент и считать только его
         if self.__spent_time_yt != total_spent_time:
             self.__write_yt_error('Spent Time')
+
+        # Логичнее сортировать по ID, но в таком виде оно нигде не используется.
+        # Поэтому сортируем по убыванию spent time
+        self.__subtasks.sort(key=get_issue_spent_time, reverse=True)
+
+        # Заплатка для широко распространнего способа ограничения перемещения задач
+        # (добавление workitem'a длинной в 1 минуту)
+        if len(self.__work_items) > 1:
+            elem0 = self.__work_items[0]
+            buffer_or_onhold = elem0.state == IssueState.Buffer or elem0.state == IssueState.OnHold
+            if buffer_or_onhold and elem0.duration == Duration.from_minutes(1):
+                elem0.state = self.__work_items[1].state
+                yt_logger.debug('Fixed 1m buffer')
+
+
+        # !!! Эта операция всегда должна быть последней !!!
+        # !!! Иначе сломаются фиксы выше                !!!
+        # Сортируем все workitem'ы по времени создания
+        # для стабилизации и ускорения дальнейшей обработки
+        self.__work_items.sort()
+
 
     def get_result(self) -> IssueInfo:
         self.__finalize()
@@ -238,7 +302,9 @@ class IssueParser:
             pauses=self.__pauses,
             subtasks=self.__subtasks,
             yt_errors=self.__yt_errors,
-            overdues=self.__overdues
+            overdues=self.__overdues,
+            component=self.__component,
+            project=self.__project
         )
 
     def __add_state(self, timestamp: Timestamp, state: str) -> None:

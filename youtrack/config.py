@@ -11,13 +11,17 @@ class CustomFields:
     assignee: CustomField
     scope: CustomField
     spent_time: CustomField
+    component: CustomField
 
     @staticmethod
     def default_config() -> 'CustomFields':
-        return CustomFields(state=CustomField(id='110-33', name='State'),
-                            assignee=CustomField(id='111-7', name='Assignee'),
-                            scope=CustomField(id='116-7', name='Scope'),
-                            spent_time=CustomField(id='116-6', name='Spent time'))
+        return CustomFields(
+            state=CustomField(id='110-33', name='State'),
+            assignee=CustomField(id='111-7', name='Assignee'),
+            scope=CustomField(id='116-7', name='Scope'),
+            spent_time=CustomField(id='116-6', name='Spent time'),
+            component=CustomField(id='110-32', name='Component')
+        )
 
 
 class YouTrackConfig:

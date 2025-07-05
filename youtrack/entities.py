@@ -2,7 +2,7 @@ from datetime import timedelta
 from dataclasses import dataclass
 from enum import StrEnum
 from functools import cached_property
-from .utils import Timestamp, Duration, count_working_minutes
+from .utils import Timestamp, Duration, count_working_minutes, is_empty
 
 
 UNASSIGNED_NAME = 'Unassigned'
@@ -17,9 +17,24 @@ class IssueState(StrEnum):
 
 
 @dataclass
+class Project:
+    short_name: str
+    name: str
+
+
+@dataclass
 class CustomField:
     id: str
     name: str
+
+    def __eq__(self, other):
+        """Compare without ID
+        
+        TODO Подумать, нужен ли вообще ID
+        """
+        if isinstance(other, CustomField):
+            return self.name == other.name
+        return NotImplemented
 
 
 @dataclass
@@ -59,9 +74,13 @@ class WorkItem(Event):
     state: str
 
     def begin(self) -> Timestamp:
+        """Возвращает Timestamp начала работы
+        """
         return self.timestamp
 
     def end(self) -> Timestamp:
+        """Возвращает Timestamp окончания работы
+        """
         return self.timestamp + self.duration
         
     def __str__(self):
@@ -69,6 +88,8 @@ class WorkItem(Event):
     
     @cached_property
     def business_duration(self) -> Duration:
+        """Возвращает сколько из общего Duration пришлось на рабочее время
+        """
         minutes = count_working_minutes(begin=self.begin().to_datetime(),
                                         end=self.end().to_datetime())
         return Duration.from_minutes(minutes)
@@ -84,9 +105,11 @@ class ShortIssueInfo:
     spent_time_yt: Duration
     current_assignee: str
     state: str
+    component: str
     tags: list[Tag]
     subtasks: list['ShortIssueInfo']
     comments: list[Comment]
+    project: Project
 
 
 @dataclass
@@ -115,15 +138,19 @@ class IssueInfo(ShortIssueInfo):
         return self.started_datetime - self.creation_datetime
     
     @property
-    def spent_time(self) -> Duration:
-        """Общее время работы (Spend Time)"""
-        # built-in sum doesn't work here because holds intermediate values as int
+    def spent_time_real(self) -> Duration:
+        """Время работы по work item'ам в текущей задаче"""
         total = Duration()
         for i in self.work_items:
             total = total + i.duration
-        
-        # YT автоматически вливает время подзадач в Spent Time основной задачи
-        # Чтобы сходилось время нужно это учитывать
+        return total
+
+    @property
+    def spent_time(self) -> Duration:
+        """Общее время работы (Spend Time)"""
+        # За основу берём реальный spent_time в задаче
+        total = self.spent_time_real        
+        # И добавляем к нему значения из подзадач
         for i in self.subtasks:
             total = total + i.spent_time_yt
         return total
@@ -140,7 +167,7 @@ class IssueInfo(ShortIssueInfo):
             return 'Нет'
                 
         as_percent = float(abs(overrun)) / scope.total_seconds() * 100
-        return f"{Duration(timedelta(seconds=abs(overrun))).format_business()} (+{as_percent:.0f}%)"
+        return f"{Duration(timedelta(seconds=abs(overrun))).format_yt()} (+{as_percent:.0f}%)"
     
     @property
     def is_started(self) -> bool:
@@ -150,66 +177,45 @@ class IssueInfo(ShortIssueInfo):
     def is_finished(self) -> bool:
         return self.resolve_datetime is not None
     
-    def to_dict(self):
-        overdues = [{'date': i.timestamp.format_ru(), 
-                     'name': i.value} for i in self.overdues]
-        tags = [{'text': i.name, 
-                 'bg_color': i.background_color, 
-                 'fg_color': i.foreground_color} for i in self.tags]
-        comments = [{'creation_datetime': i.timestamp.format_ru(),
-                     'author': i.author, 
-                     'text': i.text} for i in self.comments]
-        
-        pauses_total = Duration()
-        pauses_total_business = Duration()
-        pauses_sorted = sorted(self.pauses, key=lambda x: x.business_duration, reverse=True)
-        for i in pauses_sorted:
-            pauses_total += i.duration
-            pauses_total_business += i.business_duration
-        pauses = [{'name': i.name,
-                   'begin': i.begin().format_ru(),
-                   'end': i.end().format_ru(),
-                   'duration': i.duration.format_natural(),
-                   'duration_business': i.business_duration.format_business(),
-                   'percents': f'{i.business_duration.to_seconds() / pauses_total_business.to_seconds() * 100:.2f}'} for i in pauses_sorted]
+    def get_activities_range(self) -> tuple[Timestamp, Timestamp|None]:
+        """Возвращает диапазон дат между началом первой и концом последней активности"""
+        min = self.creation_datetime
+        max = self.resolve_datetime
 
-        subtasks = []
-        subtasks_total_spent_time = Duration()
-        for i in sorted(self.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
-            subtasks_total_spent_time += i.spent_time_yt
-            subtasks.append({'id': i.id,
-                             'title': i.summary,
-                             'state': i.state,
-                             'spent_time': i.spent_time_yt.format_business(),
-                             'percent': f'{i.spent_time_yt.to_seconds() / self.spent_time_yt.to_seconds() * 100:.2f}'})
+        # workitem'ы отсортированы по возврастанию, поэтому можем проверить только первый
+        if not is_empty(self.work_items):
+            first_timestamp = self.work_items[0].begin()
+            if first_timestamp < min:
+                min = first_timestamp
 
-        return {
-            # Basic
-            'id': self.id,
-            'summary': self.summary,
-            'author': self.author,
-            'state': self.state,
-            'is_resolved': self.is_finished,
-            'scope': self.scope.format_business() if self.scope else None,
-            'scope_overrun': self.scope_overrun,
-            'creation_datetime': self.creation_datetime.format_ru(),
-            'spent_time': self.spent_time.format_business(),
-            'reaction_time': self.reaction_time.format_natural() if self.is_started else None,
-            'resolution_time': self.resolution_time.format_natural() if self.is_finished else None,
+        # Кто-нибудь может создать workitem с не самым последним timestamp, 
+        # но более длительным временем работы
+        # TODO подумать над оптимизацией
+        for i in self.work_items:
+            end = i.end()
+            if max is None:
+                max = end
+            elif end > max:
+                max = end
 
-            # Containers
-            'overdues': overdues,
-            'tags': tags,
-            'comments': comments,
-            'yt_errors': self.yt_errors,
-            'pauses': {
-                'total': pauses_total.format_natural(),
-                'total_business': pauses_total_business.format_business(),
-                'entries': pauses
-            },
-            'subtasks': {
-                'total': subtasks_total_spent_time.format_business(),
-                'entries': subtasks
-            }
-        }
-        pass
+        return min,max
+
+
+def get_issue_spent_time(item: ShortIssueInfo) -> Duration:
+    assert isinstance(item, ShortIssueInfo)
+    return item.spent_time_yt
+
+
+def get_workitem_duration(item: WorkItem) -> Duration:
+    assert isinstance(item, WorkItem)
+    return item.duration
+
+
+def get_workitem_business_duration(item: WorkItem) -> Duration:
+    assert isinstance(item, WorkItem)
+    return item.business_duration
+
+
+def get_event_timestamp(event: Event) -> Timestamp:
+    assert isinstance(event, Event)
+    return event.timestamp
