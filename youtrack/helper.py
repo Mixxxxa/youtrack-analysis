@@ -2,7 +2,8 @@ import requests
 import typing as t
 from .config import YouTrackConfig
 from .entities import IssueInfo
-from .utils import InvalidIssueIdError, yt_logger, is_valid_issue_id, extract_issue_id_from_url
+from .utils import yt_logger, is_valid_issue_id, extract_issue_id_from_url
+from .utils.exceptions import InvalidIssueIdError
 from .parser import IssueParser
 
 

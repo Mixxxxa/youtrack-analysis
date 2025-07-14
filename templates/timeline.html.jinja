@@ -10,7 +10,7 @@
 {% block head %}
 {{ super() }}
 <title>{{ summary }} - Timeline</title>
-<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.css" rel="stylesheet" integrity="sha384-Zrj/as4Sl7o40iPyzYoRdGiqptjoy2C18Fll9i1ez3FkuwkcFRnV0c4ZeAlON/IL" crossorigin="anonymous">
+<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/moment-2.29.4/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.css" rel="stylesheet" integrity="sha384-slT0z6pIluGB1bYiC+QlRxdkO/kZ44XxMNxL55+gsHW5VXAKztZYdZ5fILHh09W/" crossorigin="anonymous">
 {% endblock %}
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
@@ -119,7 +119,7 @@
                     <td style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
                     <td>{{entry.state}}</td>
                     <td data-order="{{entry.spent_time_order}}">{{entry.spent_time}}</td>
-                    <td data-order="{{entry.percent_order}}">{{entry.percent}}</td>
+                    <td data-order="{{entry.percent}}">{{entry.percent}}{{ '%' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -146,8 +146,8 @@
                 {% for entry in tables.by_people %}
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
-                    <td>{{entry.spent_time}}</td>
-                    <td>{{entry.percent}}</td>
+                    <td data-order="{{entry.spent_time_order}}">{{entry.spent_time}}</td>
+                    <td data-order="{{entry.percent}}">{{entry.percent}}{{ '%' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -161,12 +161,12 @@
         </table>
     </div>
     <div class="tab-pane fade" id="comments-tab-pane" role="tabpanel" aria-labelledby="comments-tab" tabindex="0">
-        <table class="table table-hover table-sm caption-top">
+        <table id="comments-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">Автор</th>
                     <th scope="col">Дата</th>
-                    <th scope="col">Текст</th>
+                    <th scope="col">Текст комментария</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -202,7 +202,7 @@
                 </div>
             </div>
         </div>
-        <table class="table table-hover table-sm caption-top">
+        <table id="pauses-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
@@ -216,12 +216,12 @@
             <tbody class="table-group-divider">
                 {% for item in pauses.entries %}
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="row">{{item.name}}</th>
+                    <td style="padding-left: var(--table-left-padding);" scope="row">{{item.name}}</th>
                     <td>{{item.begin}}</td>
                     <td>{{item.end}}</td>
-                    <td>{{item.duration}}</td>
-                    <td>{{item.duration_business}}</td>
-                    <td>{{item.percents}}</td>
+                    <td data-order="{{item.duration_order}}">{{item.duration}}</td>
+                    <td data-order="{{item.duration_business_order}}">{{item.duration_business}}</td>
+                    <td data-order="{{item.percents}}">{{item.percents}}{{ '%' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -309,7 +309,7 @@
 {% endblock %}
 {% block additionalscripts %}
 {{ super() }}
-<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.js" integrity="sha384-4xQjfsQCLqbvY60PVYaHIfgkwnqil6HMK+EJgwE9qEp0nCIGa0fMxjOi0U2r/JFu" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/moment-2.29.4/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.js" integrity="sha384-f3QLEviWiAkWC6k6Tv2mehe5/50E3SXnV6xejXRLc+nKuMGR3gbubKEursmnt3im" crossorigin="anonymous"></script>
 <script>
     // Костыль, чтобы при нажатии на любой элемент легенды переключались 
     // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
@@ -346,17 +346,8 @@
     DataTable.type('num', 'className', 'dt-body-left');
     // Убираем отступ между заголовком и телом таблицы
     DataTable.ext.classes.layout.row = 'row justify-content-between';
-    $(document).ready( function () {
-        $('#by-people-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            info: false,
-            columnDefs: [
-                { type: 'time-elapsed-dhms', targets: 1 }
-            ]
-        });
-    } );
+
+    //DataTable.datetime('D.MM.YYYY HH:mm');
 
     /**
     * Конвертирует секунды в рабочее время (дни, часы, минуты)
@@ -435,5 +426,77 @@
             },
         });
     } );
+    $(document).ready( function () {
+        $('#by-people-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            order: [],
+            info: false
+        });
+    } );
+    $(document).ready( function () {
+        $('#comments-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            order: [],
+            info: false,
+            columnDefs: [
+                {
+                    targets: 1,
+                    render: DataTable.render.datetime('D.MM.YYYY HH:mm')
+                }
+            ]
+        });
+    } );
+    $(document).ready( function () {
+        $('#pauses-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            order: [],
+            ordering: false,
+            info: false,
+            rowGroup: {
+                dataSrc: 0,
+                startRender: function (rows, group) {
+                    let timeInPercent = rows.data()
+                                            .pluck(5)
+                                            .map((a => a['@data-order'] * 1))
+                                            .reduce((a, b) => a + b);
+                    timeInPercent = DataTable.render
+                        .number(null, null, 2, '', '%')
+                        .display(timeInPercent);
+        
+                    let physicalTime = rows.data()
+                                           .pluck(3)
+                                           .map((a => a['@data-order']*1))
+                                           .reduce((a, b) => a + b);
+                    physicalTime = convertSecondsToWorkTime(physicalTime, false);
+
+                    let businessTime = rows.data()
+                                           .pluck(4)
+                                           .map((a => a['@data-order']*1))
+                                           .reduce((a, b) => a + b);
+                    businessTime = convertSecondsToWorkTime(businessTime, true);
+
+                    let tr = document.createElement('tr');
+                    addCell(tr, 'Всего в ' + group, 3);
+                    addCell(tr, physicalTime);
+                    addCell(tr, businessTime);
+                    addCell(tr, timeInPercent);
+                    return tr;
+                },
+            },
+            //columnDefs: [
+            //    {
+            //        targets: 1,
+            //        render: DataTable.render.datetime('D.MM.YYYY HH:mm')
+            //    }
+            //]
+        });
+    } );
+
 </script>
 {% endblock %}

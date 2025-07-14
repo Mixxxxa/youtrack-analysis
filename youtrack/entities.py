@@ -59,9 +59,13 @@ class WorkItem(Event):
     state: str
 
     def begin(self) -> Timestamp:
+        """Возвращает Timestamp начала работы
+        """
         return self.timestamp
 
     def end(self) -> Timestamp:
+        """Возвращает Timestamp окончания работы
+        """
         return self.timestamp + self.duration
         
     def __str__(self):
@@ -69,6 +73,8 @@ class WorkItem(Event):
     
     @cached_property
     def business_duration(self) -> Duration:
+        """Возвращает сколько из общего Duration пришлось на рабочее время
+        """
         minutes = count_working_minutes(begin=self.begin().to_datetime(),
                                         end=self.end().to_datetime())
         return Duration.from_minutes(minutes)
@@ -150,66 +156,12 @@ class IssueInfo(ShortIssueInfo):
     def is_finished(self) -> bool:
         return self.resolve_datetime is not None
     
-    def to_dict(self):
-        overdues = [{'date': i.timestamp.format_ru(), 
-                     'name': i.value} for i in self.overdues]
-        tags = [{'text': i.name, 
-                 'bg_color': i.background_color, 
-                 'fg_color': i.foreground_color} for i in self.tags]
-        comments = [{'creation_datetime': i.timestamp.format_ru(),
-                     'author': i.author, 
-                     'text': i.text} for i in self.comments]
-        
-        pauses_total = Duration()
-        pauses_total_business = Duration()
-        pauses_sorted = sorted(self.pauses, key=lambda x: x.business_duration, reverse=True)
-        for i in pauses_sorted:
-            pauses_total += i.duration
-            pauses_total_business += i.business_duration
-        pauses = [{'name': i.name,
-                   'begin': i.begin().format_ru(),
-                   'end': i.end().format_ru(),
-                   'duration': i.duration.format_yt_natural(),
-                   'duration_business': i.business_duration.format_yt(),
-                   'percents': f'{i.business_duration.to_seconds() / pauses_total_business.to_seconds() * 100:.2f}'} for i in pauses_sorted]
 
-        subtasks = []
-        subtasks_total_spent_time = Duration()
-        for i in sorted(self.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
-            subtasks_total_spent_time += i.spent_time_yt
-            subtasks.append({'id': i.id,
-                             'title': i.summary,
-                             'state': i.state,
-                             'spent_time': i.spent_time_yt.format_yt(),
-                             'percent': f'{i.spent_time_yt.to_seconds() / self.spent_time_yt.to_seconds() * 100:.2f}'})
+def get_workitem_duration(item: WorkItem) -> Duration:
+    assert isinstance(item, WorkItem)
+    return item.duration
 
-        return {
-            # Basic
-            'id': self.id,
-            'summary': self.summary,
-            'author': self.author,
-            'state': self.state,
-            'is_resolved': self.is_finished,
-            'scope': self.scope.format_business() if self.scope else None,
-            'scope_overrun': self.scope_overrun,
-            'creation_datetime': self.creation_datetime.format_ru(),
-            'spent_time': self.spent_time.format_yt(),
-            'reaction_time': self.reaction_time.format_natural() if self.is_started else None,
-            'resolution_time': self.resolution_time.format_natural() if self.is_finished else None,
 
-            # Containers
-            'overdues': overdues,
-            'tags': tags,
-            'comments': comments,
-            'yt_errors': self.yt_errors,
-            'pauses': {
-                'total': pauses_total.format_natural(),
-                'total_business': pauses_total_business.format_business(),
-                'entries': pauses
-            },
-            'subtasks': {
-                'total': subtasks_total_spent_time.format_business(),
-                'entries': subtasks
-            }
-        }
-        pass
+def get_workitem_business_duration(item: WorkItem) -> Duration:
+    assert isinstance(item, WorkItem)
+    return item.business_duration

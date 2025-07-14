@@ -1,5 +1,6 @@
 from .entities import *
-from .utils import yt_logger, is_empty, ParsingError
+from .utils import yt_logger, is_empty
+from .utils.exceptions import ParsingError
 from .config import CustomFields
 from math import fabs
 

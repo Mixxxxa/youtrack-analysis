@@ -12,6 +12,11 @@ def test_format_ru():
     assert val.format_ru() == '18.04.2025 18:00'
 
 
+def test_formats():
+    val = Timestamp.from_datetime(friday_end)
+    assert val.format_iso8601() == '2025-04-18T15:00+00:00'
+
+
 def test_is_monday():
     assert Timestamp(friday_end).is_monday() == False
     assert Timestamp(monday_begin).is_monday() == True

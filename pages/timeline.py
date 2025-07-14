@@ -6,7 +6,115 @@ import plotly.graph_objects as go
 import plotly.express as ex
 import plotly.io as pio
 import operator
-import math
+from dataclasses import dataclass, field
+from functools import cached_property
+
+
+def to_dict(data: yt.IssueInfo):
+        overdues = [{'date': i.timestamp.format_ru(), 
+                     'name': i.value} for i in data.overdues]
+        tags = [{'text': i.name, 
+                 'bg_color': i.background_color, 
+                 'fg_color': i.foreground_color} for i in data.tags]
+        comments = [{'creation_datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
+                     'author': i.author, 
+                     'text': i.text} for i in data.comments]
+        
+        @dataclass
+        class PersonPauses:
+            pauses: list[yt.WorkItem] = field(default_factory=list)
+
+            @cached_property
+            def total(self) -> yt.Duration:
+                sum = yt.Duration()
+                for i in self.pauses:
+                    sum += i.business_duration
+                return sum
+
+        pauses_total = yt.Duration()
+        pauses_total_business = yt.Duration()
+        pauses_by_people = collections.defaultdict(PersonPauses)
+
+        for i in data.pauses:
+            pauses_by_people[i.name].pauses.append(i)
+            pauses_total += i.duration
+            pauses_total_business += i.business_duration
+
+        pauses = []
+        for entry in sorted(pauses_by_people.items(), key=lambda x: x[1].total, reverse=True):
+            name = entry[0]
+            for i in sorted(entry[1].pauses):
+                pauses.append({'name': name,
+                   'begin': i.begin().format_ru(),
+                   'end': i.end().format_ru(),
+                   'duration': i.duration.format_yt_natural(),
+                   'duration_order': i.duration.to_seconds(),
+                   'duration_business': i.business_duration.format_yt(),
+                   'duration_business_order': i.business_duration.to_seconds(),
+                   'percents': round(i.business_duration.to_seconds() / pauses_total_business.to_seconds() * 100, 2) })
+        #for name in sorted(pauses_by_people.items(), key=lambda x: x[1], reverse=True):
+        #    for j 
+        
+
+        
+
+        
+
+        #pauses_by_people = sorted(pauses_by_people, reverse=True)
+
+        #pauses_sorted = sorted(self.pauses, key=lambda x: (x.name, -x.business_duration.to_seconds()), reverse=False)
+        #for i in pauses_sorted:
+        #    pauses_total += i.duration
+        #    pauses_total_business += i.business_duration
+        #pauses = [{'name': i.name,
+        #           'begin': i.begin().format_ru(),
+        #           'end': i.end().format_ru(),
+        #           'duration': i.duration.format_yt_natural(),
+        #           'duration_order': i.duration.to_seconds(),
+        #           'duration_business': i.business_duration.format_yt(),
+        #           'duration_business_order': i.business_duration.to_seconds(),
+        #           'percents': round(i.business_duration.to_seconds() / pauses_total_business.to_seconds() * 100, 2) } for i in pauses_sorted]
+
+        subtasks = []
+        subtasks_total_spent_time = yt.Duration()
+        for i in sorted(data.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
+            subtasks_total_spent_time += i.spent_time_yt
+            subtasks.append({'id': i.id,
+                             'title': i.summary,
+                             'state': i.state,
+                             'spent_time': i.spent_time_yt.format_yt(),
+                             'percent': f'{i.spent_time_yt.to_seconds() / data.spent_time_yt.to_seconds() * 100:.2f}'})
+
+        return {
+            # Basic
+            'id': data.id,
+            'summary': data.summary,
+            'author': data.author,
+            'state': data.state,
+            'is_resolved': data.is_finished,
+            'scope': data.scope.format_yt() if data.scope else None,
+            'scope_overrun': data.scope_overrun,
+            'creation_datetime': data.creation_datetime.format_ru(),
+            'spent_time': data.spent_time.format_yt(),
+            'reaction_time': data.reaction_time.format_yt_natural() if data.is_started else None,
+            'resolution_time': data.resolution_time.format_yt_natural() if data.is_finished else None,
+
+            # Containers
+            'overdues': overdues,
+            'tags': tags,
+            'comments': comments,
+            'yt_errors': data.yt_errors,
+            'pauses': {
+                'total': pauses_total.format_yt_natural(),
+                'total_business': pauses_total_business.format_yt(),
+                'entries': pauses
+            },
+            'subtasks': {
+                'total': subtasks_total_spent_time.format_yt(),
+                'entries': subtasks
+            }
+        }
+
 
 
 def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:
@@ -22,9 +130,7 @@ def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:
              'state': k[1],
              'spent_time': v.format_yt(),
              'spent_time_order': v.to_seconds(),
-             'percent': f'{v.to_seconds() / total_spent_time * 100:.2f}%',
-             'percent_order': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
-             #'percent': round(v.to_seconds() / total_spent_time * 100, 2) } for k,v in cont.items()]
+             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
 
 
 def get_by_people_info(data: yt.IssueInfo) -> list[dict[str, str]]:
@@ -37,21 +143,8 @@ def get_by_people_info(data: yt.IssueInfo) -> list[dict[str, str]]:
     
     return [{'name': k, 
              'spent_time': v.format_yt(),
-             'percent': f'{v.to_seconds() / total_spent_time * 100:.2f}%'} for k,v in cont.items()]
-
-
-def get_by_type_info(data: yt.IssueInfo) -> list[dict[str, str]]:
-    cont = collections.defaultdict(yt.Duration)
-    for work_item in data.work_items:
-        key = work_item.state
-        cont[key] += work_item.duration
-
-    cont = dict(sorted(cont.items(), key=lambda item: item[1], reverse=True))
-    total_spent_time = data.spent_time.to_seconds()
-    
-    return [{'state':k,
-             'spent_time': v.format_yt(),
-             'percent': f'{v.to_seconds() / total_spent_time * 100:.2f}%'} for k,v in cont.items()]
+             'spent_time_order': v.to_seconds(),
+             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
 
 
 def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfig):
@@ -212,9 +305,8 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         graph_div=pio.to_html(fig, full_html=False, div_id='9cc162d8-61cf-4829-aede-73d8b3495197'),
         tables={
             'detailed': get_detailed_info(data),
-            'by_type': get_by_type_info(data),
             'by_people': get_by_people_info(data)
         }
     )
-    template_data.update(data.to_dict())
+    template_data.update(to_dict(data))
     return template_data
