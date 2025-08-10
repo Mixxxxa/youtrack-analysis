@@ -4,4 +4,5 @@ gunicorn
 pandas == 2.2.3
 numpy == 2.2.4
 Flask == 3.1.1
+Flask-Babel
 plotly == 6.0.1

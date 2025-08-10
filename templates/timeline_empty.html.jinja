@@ -11,12 +11,12 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form id="redirectForm" class="input-group mb-3" method="GET" action="">
-            <input type="text" name="issue" class="form-control form-control-lg" placeholder="Введите id задачи или ссылку"
-                aria-label="Введите id задачи" required>
-            <button type="submit" class="btn btn-success">Перейти</button>
+            <input type="text" name="issue" class="form-control form-control-lg" placeholder="{{ _('timeline.issue_input.placeholder') }}"
+                aria-label="{{ _('timeline.issue_input.hover') }}" required>
+            <button type="submit" class="btn btn-success">{{ _('timeline.issue_input.confirm') }}</button>
         </form>
         <div class="text-muted">
-            <p>Примеры корректного ввода:</p>
+            <p>{{ _('timeline.examples_header') }}</p>
             <ul>
                 <li><a href="timeline?issue=https://{{ host_name }}/youtrack/issue/id-11963" class="text-decoration-none">https://{{ host_name }}/youtrack/issue/id-11963</a></li>
                 <li><a href="timeline?issue=id-11963" class="text-decoration-none">id-11963</a>

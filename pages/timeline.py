@@ -7,6 +7,7 @@ import plotly.express as ex
 import plotly.io as pio
 from dataclasses import dataclass, field
 from functools import cached_property
+from flask_babel import _
 
 
 @dataclass
@@ -214,8 +215,8 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             mode='lines',
             line=dict(width=2, color='red'),
             legendgroup="misc",
-            legendgrouptitle_text="Прочее",
-            name='Assignee'
+            legendgrouptitle_text=_('timeline.chart.legend.other'),
+            name=_('timeline.chart.legend.assignee')
         )
     )
     if not yt.is_empty(data.comments):
@@ -223,7 +224,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             x=df_comments['date'],
             y=df_comments['author'],
             text=df_comments['text'],
-            name='Комментарии',
+            name=_('timeline.chart.legend.comments'),
             mode='markers',
             marker=dict(size=10, color='DarkViolet'),
             zorder=9999
@@ -236,7 +237,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             fillcolor="grey", 
             line_width=0,
             opacity=0.3,
-            name='Pause',
+            name='Pause', # НЕ МЕНЯТЬ! Связано с JS
             legendgroup="misc",
             showlegend=(i==0)
         )
@@ -245,7 +246,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             x=overdue.timestamp.to_datetime(tz),
             line_color="DarkRed", 
             showlegend=(i==0),
-            name='Overdue', 
+            name='Overdue', # НЕ МЕНЯТЬ! Связано с JS
             legendgroup="misc"
         )
     
@@ -256,7 +257,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             x=data.started_datetime.to_datetime(tz), 
             line_color="blue", 
             showlegend=True, 
-            name='Взято в работу', 
+            name=_('timeline.chart.legend.started_datetime'), 
             #legendgroup="milestones"
         )
 
@@ -266,9 +267,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         line_color="red", 
         opacity=1.0, 
         showlegend=True, 
-        name='Created', 
-        #legendgroup="milestones",
-        #legendgrouptitle_text="Milestones"
+        name=_('timeline.chart.legend.created_datetime')
     )
        
     if data.is_finished:
@@ -278,8 +277,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             line_color="red", 
             opacity=1.0, 
             showlegend=True, 
-            name='Resolved', 
-            #legendgroup="milestones"
+            name=_('timeline.chart.legend.resolved_datetime'),
         )
     
     fig.update_yaxes(showgrid=True)

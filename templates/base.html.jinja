@@ -196,7 +196,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
             <button class="btn btn-custom me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar">
-                ☰ Меню
+                ☰ {{ _('base.menu_button') }}
             </button>
             {% block navbargadget %}
             {% endblock %}
@@ -208,18 +208,28 @@
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" href="#" data-bs-theme-value="light">
-                                <i class="bi bi-brightness-high-fill me-2 opacity-50"></i> Светлая
+                                <i class="bi bi-brightness-high-fill me-2 opacity-50"></i> {{ _('theme_selector.light') }}
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="#" data-bs-theme-value="dark">
-                                <i class="bi bi-moon-stars-fill me-2 opacity-50"></i> Тёмная
+                                <i class="bi bi-moon-stars-fill me-2 opacity-50"></i> {{ _('theme_selector.dark') }}
                             </a>
                         </li>
                         <li><a class="dropdown-item" href="#" data-bs-theme-value="auto">
-                                <i class="bi bi-circle-half me-2 opacity-50"></i> Как в системе
+                                <i class="bi bi-circle-half me-2 opacity-50"></i> {{ _('theme_selector.as_system') }}
                             </a>
                         </li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-custom ms-2 dropdown-toggle" type="button" id="language-switcher" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-translate"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for entry in supported_languages %}
+                            <li><a class='dropdown-item {{"active" if entry.is_active}}' href='{{ url_for_language(entry.code) }}' data-language='{{entry.code}}'>{{entry.display_name}}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <a class="btn btn-custom ms-2" href="https://github.com/Mixxxxa/youtrack-analysis" target="_blank" role="button">
@@ -231,8 +241,8 @@
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="sidebarLabel">Меню</h5>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+            <h5 class="offcanvas-title" id="sidebarLabel">{{ _('base.menu_title') }}</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="base.close_button"></button>
         </div>
         <div class="offcanvas-body">
             <ul class="list-group list-group-flush">

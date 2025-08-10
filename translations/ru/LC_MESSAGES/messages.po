@@ -1,0 +1,355 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-09-21 06:21+0300\n"
+"PO-Revision-Date: 2025-09-21 06:21+0300\n"
+"Last-Translator: Mikhail Gelvikh\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: main.py:102
+msgid "base.service_wip"
+msgstr ""
+"Сервис работает в тестовом режиме. В случае обнаружения проблем "
+"обратитесь к %(support_person)s."
+
+#: main.py:111
+msgid "base.issue_not_found_with_id"
+msgstr "Задача с ID '%(issue_id)s' не найдена"
+
+#: main.py:120
+msgid "base.invalid_issue_id_or_url"
+msgstr "Неправильный ID или URL задачи: '%(issue_id)s'"
+
+#: main.py:129
+msgid "base.unable_to_get_info_with_id_and_person"
+msgstr ""
+"Не удалось получить информацию по задаче '%(issue_id)s'. Обратитесь к "
+"%(support_person)s для устранения проблемы."
+
+#: pages/timeline.py:218
+msgid "timeline.chart.legend.other"
+msgstr "Другое"
+
+#: pages/timeline.py:219
+msgid "timeline.chart.legend.assignee"
+msgstr "Assignee"
+
+#: pages/timeline.py:227
+msgid "timeline.chart.legend.comments"
+msgstr "Комментарии"
+
+#: pages/timeline.py:260
+msgid "timeline.chart.legend.started_datetime"
+msgstr "Начало работы"
+
+#: pages/timeline.py:270
+msgid "timeline.chart.legend.created_datetime"
+msgstr "Создание задачи"
+
+#: pages/timeline.py:280
+msgid "timeline.chart.legend.resolved_datetime"
+msgstr "Решение задачи"
+
+#: templates/base.html.jinja:199
+msgid "base.menu_button"
+msgstr "Меню"
+
+#: templates/base.html.jinja:211
+msgid "theme_selector.light"
+msgstr "Светлая"
+
+#: templates/base.html.jinja:216
+msgid "theme_selector.dark"
+msgstr "Тёмная"
+
+#: templates/base.html.jinja:220
+msgid "theme_selector.as_system"
+msgstr "Как в системе"
+
+#: templates/base.html.jinja:244
+msgid "base.menu_title"
+msgstr "Режимы работы"
+
+#: templates/timeline.html.jinja:88
+msgid "issue.placeholders.in_progress"
+msgstr "ещё в работе..."
+
+#: templates/timeline.html.jinja:92
+msgid "issue.placeholders.not_started"
+msgstr "ещё не начинали..."
+
+#: templates/timeline.html.jinja:96
+msgid "issue.placeholders.api_error"
+msgstr "ошибка API"
+
+#: templates/timeline.html.jinja:111 templates/timeline_empty.html.jinja:14
+msgid "timeline.issue_input.placeholder"
+msgstr "Введите ID задачи"
+
+#: templates/timeline.html.jinja:112 templates/timeline_empty.html.jinja:15
+msgid "timeline.issue_input.hover"
+msgstr "Введите ID задачи или ссылку на неё"
+
+#: templates/timeline.html.jinja:114 templates/timeline_empty.html.jinja:16
+msgid "timeline.issue_input.confirm"
+msgstr "Перейти"
+
+#: templates/timeline.html.jinja:124
+msgid "timeline.issue.tags.resolved"
+msgstr "Закрыто"
+
+#: templates/timeline.html.jinja:127
+msgid "timeline.issue.tags.active"
+msgstr "В работе"
+
+#: templates/timeline.html.jinja:131
+msgid "timeline.issue.tags.api_error_hover"
+msgstr ""
+"Во время получения данных из YouTrack обнаружены ошибки. Подробнее в "
+"таблице 'Ошибки YouTrack API'."
+
+#: templates/timeline.html.jinja:132
+msgid "timeline.issue.tags.api_error"
+msgstr "Обнаружены ошибки YouTrack API"
+
+#: templates/timeline.html.jinja:149
+msgid "issue.author"
+msgstr "Автор"
+
+#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:325
+msgid "issue.state"
+msgstr "Состояние"
+
+#: templates/timeline.html.jinja:151
+msgid "issue.assignee"
+msgstr "Assignee"
+
+#: templates/timeline.html.jinja:152
+msgid "issue.project"
+msgstr "Проект"
+
+#: templates/timeline.html.jinja:153
+msgid "issue.component"
+msgstr "Компонент"
+
+#: templates/timeline.html.jinja:156
+msgid "issue.created"
+msgstr "Создано"
+
+#: templates/timeline.html.jinja:157
+msgid "issue.started_datetime"
+msgstr "Взято в работу"
+
+#: templates/timeline.html.jinja:158
+msgid "issue.reaction_duration"
+msgstr "Время реакции"
+
+#: templates/timeline.html.jinja:158
+msgid "issue.reaction_duration.help_text"
+msgstr ""
+"Время от создания задачи до взятия в работу (первого перехода в In "
+"Progress или Review)"
+
+#: templates/timeline.html.jinja:159
+msgid "issue.resolve_datetime"
+msgstr "Решено"
+
+#: templates/timeline.html.jinja:160
+msgid "issue.resolve_duration"
+msgstr "Время решения задачи"
+
+#: templates/timeline.html.jinja:160
+msgid "issue.resolve_duration.help_text"
+msgstr "Фактическое время от создания задачи до её закрытия"
+
+#: templates/timeline.html.jinja:163
+msgid "issue.scope"
+msgstr "Scope"
+
+#: templates/timeline.html.jinja:164
+msgid "issue.spent_time"
+msgstr "Spent Time"
+
+#: templates/timeline.html.jinja:165
+msgid "issue.scope_overrun"
+msgstr "Превышение Scope"
+
+#: templates/timeline.html.jinja:165
+msgid "issue.scope_overrun.help_text"
+msgstr "Разница между SpentTime и Scope"
+
+#: templates/timeline.html.jinja:166
+msgid "issue.spent_time_direct"
+msgstr "Spent Time (чистый)"
+
+#: templates/timeline.html.jinja:166
+msgid "issue.spent_time_direct.help_text"
+msgstr "Время записанное именно в ЭТОЙ задаче. Подробнее во вкладке 'Подзадачи'"
+
+#: templates/timeline.html.jinja:167
+msgid "issue.spent_time_subtasks"
+msgstr "Spent Time (от подзадач)"
+
+#: templates/timeline.html.jinja:167
+msgid "issue.spent_time_subtasks.help_text"
+msgstr ""
+"Показывает сколько времени в текущей задаче получено от подзадач. "
+"Подробнее во вкладке 'Подзадачи'"
+
+#: templates/timeline.html.jinja:171
+msgid "timeline.tables.pivot.name"
+msgstr "Сводная таблица"
+
+#: templates/timeline.html.jinja:172
+msgid "timeline.tables.by_people.name"
+msgstr "По людям"
+
+#: templates/timeline.html.jinja:173
+msgid "timeline.tables.comments.name"
+msgstr "Комментарии"
+
+#: templates/timeline.html.jinja:174
+msgid "timeline.tables.pauses.name"
+msgstr "Простои"
+
+#: templates/timeline.html.jinja:175
+msgid "timeline.tables.overdues.name"
+msgstr "Overdue"
+
+#: templates/timeline.html.jinja:176
+msgid "timeline.tables.subtasks.name"
+msgstr "Подзадачи"
+
+#: templates/timeline.html.jinja:178
+msgid "timeline.tables.yt_errors.name"
+msgstr "Ошибки YouTrack API"
+
+#: templates/timeline.html.jinja:186 templates/timeline.html.jinja:216
+#: templates/timeline.html.jinja:264 templates/timeline.html.jinja:301
+msgid "timeline.tables.general.name"
+msgstr "Имя"
+
+#: templates/timeline.html.jinja:187
+msgid "timeline.tables.general.state"
+msgstr "Состояние"
+
+#: templates/timeline.html.jinja:243
+msgid "timeline.tables.comments.author"
+msgstr "Автор"
+
+#: templates/timeline.html.jinja:244
+msgid "timeline.tables.comments.date"
+msgstr "Дата"
+
+#: templates/timeline.html.jinja:245
+msgid "timeline.tables.comments.comment"
+msgstr "Комментарий"
+
+#: templates/timeline.html.jinja:260
+msgid "timeline.tables.pauses.help_title"
+msgstr "Что такое простои (паузы)?"
+
+#: templates/timeline.html.jinja:260
+msgid "timeline.tables.pauses.help_text"
+msgstr ""
+"Паузы в работе — это то время, пока задача находится в <strong>On "
+"hold</strong>.<br />Графа <code>Фактическое время</code> показывает "
+"физическое время между этими датами. Графа <code>Только рабочее "
+"время</code> выбирает из <code>Фактическое время</code> промежутки с "
+"понедельника по пятницу с 9:00-13:00 и 14:00-18:00 без учета праздничных "
+"дней.<br /><strong>Примечание</strong>: разница в одну секунду между "
+"рабочим и фактическим временем связана с особенностями подсчета "
+"(округлением до минут)."
+
+#: templates/timeline.html.jinja:265
+msgid "timeline.tables.pauses.begin"
+msgstr "Начало"
+
+#: templates/timeline.html.jinja:266
+msgid "timeline.tables.pauses.end"
+msgstr "Конец"
+
+#: templates/timeline.html.jinja:267
+msgid "timeline.tables.pauses.actual_time"
+msgstr "Фактическое время"
+
+#: templates/timeline.html.jinja:268
+msgid "timeline.tables.pauses.wh_only"
+msgstr "Только рабочее время"
+
+#: templates/timeline.html.jinja:300 templates/timeline.html.jinja:322
+#: templates/timeline.html.jinja:360
+msgid "timeline.tables.general.counter"
+msgstr "№"
+
+#: templates/timeline.html.jinja:302
+msgid "timeline.tables.general.date"
+msgstr "Дата"
+
+#: templates/timeline.html.jinja:317
+msgid "timeline.tables.subtasks.help_title"
+msgstr "Как подзадачи влияют на Spent Time?"
+
+#: templates/timeline.html.jinja:317
+msgid "timeline.tables.subtasks.help_text"
+msgstr ""
+"YouTrack неявно добавляет <code>Spent Time</code> каждой подзадачи в "
+"общий <code>Spent Time</code>.  Из-за этого, может показаться что задача "
+"затянулась, а по факту, время накапало вообще в другом месте. Таблица "
+"ниже показывает каждую подзадачу (если есть), а также её <code>Spent "
+"Time</code> и процент от общего."
+
+#: templates/timeline.html.jinja:324
+msgid "timeline.tables.subtasks.task_name"
+msgstr "Задача"
+
+#: templates/timeline.html.jinja:356
+msgid "timeline.tables.yt_errors.help_title"
+msgstr "Что за ошибки YouTrack?"
+
+#: templates/timeline.html.jinja:356
+msgid "timeline.tables.yt_errors.help_text"
+msgstr ""
+"В списке ниже перечислены проблемы обнаруженные при обработке данных "
+"полученных из YouTrack. Если вы видите это сообщение, значит для этой "
+"проблемы удалось сделать workaround, ценой возможной неточности "
+"данных.<br />В столбце <code>Затронутые данные</code> как раз указаны "
+"данные которые могли быть испорчены."
+
+#: templates/timeline.html.jinja:361
+msgid "timeline.tables.yt_errors.details"
+msgstr "Описание проблемы"
+
+#: templates/timeline.html.jinja:362
+msgid "timeline.tables.yt_errors.affected_data"
+msgstr "Затронутые данные"
+
+#: templates/timeline.html.jinja:489
+msgid "timeline.tables.pivot.total_row_prefix"
+msgstr "Всего в"
+
+#: templates/timeline.html.jinja:553
+msgid "timeline.tables.pauses.total_row_prefix"
+msgstr "Всего у"
+
+#: templates/timeline.html.jinja:573
+msgid "timeline.tables.overdues.total_row_prefix"
+msgstr "Всего у"
+
+#: templates/timeline_empty.html.jinja:19
+msgid "timeline.examples_header"
+msgstr "Примеры корректного ввода:"
+
