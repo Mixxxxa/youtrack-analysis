@@ -1,5 +1,6 @@
 import argparse
-import flask
+from flask import Flask, g, redirect, url_for, request, render_template
+from flask_babel import Babel, _
 import logging
 import pathlib
 import requests
@@ -10,17 +11,30 @@ from youtrack import YouTrackConfig, InvalidIssueIdError
 
 
 logger = logging.getLogger("youtrack-analysis")
-app = flask.Flask(__name__)
+app = Flask(__name__)
+babel = Babel(app)
+
+
+def get_locale():
+    # # if a user is logged in, use the locale from the user settings
+    # user = getattr(g, 'user', None)
+    # if user is not None:
+    #     return user.locale
+    # # otherwise try to guess the language from the user accept
+    # # header the browser transmits.  We support de/fr/en in this
+    # # example.  The best match wins.
+    return request.accept_languages.best_match(['en', 'ru'])
 
 
 @app.route('/')
 def index():
-    return flask.redirect(flask.url_for('timeline'))
+
+    return redirect(url_for('timeline'))
 
 
 @app.route('/timeline')
 def timeline():
-    issue_id = flask.request.args.get('issue', '').strip().lower()
+    issue_id = request.args.get('issue', '').strip().lower()
     config: YouTrackConfig = app.config['yt-config']
 
     try:
@@ -28,31 +42,42 @@ def timeline():
             if len(issue_id) > 0:
                 tz = timezone(timedelta(hours=3))
                 data = get_timeline_page_data(issue_id=issue_id, tz=tz, config=config)
-                return flask.render_template('timeline.html.jinja', **data)
-            return flask.render_template('timeline_empty.html.jinja', 
-                                         is_error=False, 
-                                         notification_text=f'Сервис работает в тестовом режиме. В случае обнаружения проблем обратитесь к {config.support_person}.',
-                                         host_name=config.host)
+                return render_template(
+                    'timeline.html.jinja', 
+                    **data
+                )
+            return render_template(
+                'timeline_empty.html.jinja', 
+                is_error=False, 
+                notification_text=_("The service works in the test mode. In case of errors or incorrect data ask '%(support_person)' for help", support_person=config.support_person),
+                host_name=config.host
+            )
         except requests.HTTPError as e:
             logger.warning(f"Connection EXCEPTION: {e}")
             if e.response.status_code == 404:
-                return flask.render_template('timeline_empty.html.jinja', 
-                                             is_error=True, 
-                                             notification_text=f"Задача с ID '{issue_id}' не найдена",
-                                             host_name=config.host)
+                return render_template(
+                    'timeline_empty.html.jinja', 
+                    is_error=True, 
+                    notification_text=_("The issue '%(issue_id)' was not found", issue_id=issue_id),
+                    host_name=config.host
+                )
             raise
     except InvalidIssueIdError as e:
         logger.warning(f"Invalid issue EXCEPTION: {e}")
-        return flask.render_template('timeline_empty.html.jinja', 
-                                     is_error=True, 
-                                     notification_text=f"Неправильный ID или URL задачи: '{issue_id}'",
-                                     host_name=config.host)
+        return render_template(
+            'timeline_empty.html.jinja', 
+            is_error=True, 
+            notification_text=_("Invalid issue ID or URL: 'issue_id'", issue_id=issue_id),
+            host_name=config.host
+        )
     except Exception as e:
         logger.warning(f"General EXCEPTION: {e}", exc_info=True)
-        return flask.render_template('timeline_empty.html.jinja', 
-                                     is_error=True, 
-                                     notification_text=f"Не удалось получить информацию по задаче '{issue_id}'. Обратитесь к {config.support_person} для устранения проблемы.",
-                                     host_name=config.host)
+        return render_template(
+            'timeline_empty.html.jinja', 
+            is_error=True, 
+            notification_text=f"Не удалось получить информацию по задаче '{issue_id}'. Обратитесь к {config.support_person} для устранения проблемы.",
+            host_name=config.host
+        )
 
 
 if __name__ == "__main__":
