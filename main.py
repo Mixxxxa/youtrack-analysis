@@ -1,9 +1,10 @@
 import argparse
-from flask import Flask, g, redirect, url_for, request, render_template
+from flask import Flask, g, redirect, url_for, request, render_template, session
 from flask_babel import Babel, _
 import logging
 import pathlib
 import requests
+import os
 
 from datetime import timezone, timedelta
 from pages.timeline import get_timeline_page_data
@@ -12,28 +13,42 @@ from youtrack import YouTrackConfig, InvalidIssueIdError
 
 logger = logging.getLogger("youtrack-analysis")
 app = Flask(__name__)
-babel = Babel(app)
+
+
+
+SUPPORTED_LANGUAGES = ['en', 'ru']
 
 
 def get_locale():
-    # # if a user is logged in, use the locale from the user settings
-    # user = getattr(g, 'user', None)
-    # if user is not None:
-    #     return user.locale
-    # # otherwise try to guess the language from the user accept
-    # # header the browser transmits.  We support de/fr/en in this
-    # # example.  The best match wins.
-    return request.accept_languages.best_match(['en', 'ru'])
+    if request.view_args and 'language' in request.view_args:
+        if request.view_args['language'] in SUPPORTED_LANGUAGES:
+            session['language'] = request.view_args['language']
+            return request.view_args['language']
+    if 'language' in session and session['language'] in SUPPORTED_LANGUAGES:
+        return session['language']
+    return request.accept_languages.best_match(SUPPORTED_LANGUAGES)
+
+
+babel = Babel(app, locale_selector=get_locale)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+    #return app.send_static_file('favicon.ico')
+    # или если нет файла:
+    # return '', 204
 
 
 @app.route('/')
-def index():
-
+@app.route('/<language>')
+def index(language='en'):
     return redirect(url_for('timeline'))
 
 
+@app.route('/<language>/timeline')
 @app.route('/timeline')
-def timeline():
+def timeline(language='en'):
     issue_id = request.args.get('issue', '').strip().lower()
     config: YouTrackConfig = app.config['yt-config']
 
@@ -49,7 +64,7 @@ def timeline():
             return render_template(
                 'timeline_empty.html.jinja', 
                 is_error=False, 
-                notification_text=_("The service works in the test mode. In case of errors or incorrect data ask '%(support_person)' for help", support_person=config.support_person),
+                notification_text=_("Service works in test mode. In case of errors or incorrect data ask '%(support_person)s' for help", support_person=config.support_person),
                 host_name=config.host
             )
         except requests.HTTPError as e:
@@ -58,7 +73,8 @@ def timeline():
                 return render_template(
                     'timeline_empty.html.jinja', 
                     is_error=True, 
-                    notification_text=_("The issue '%(issue_id)' was not found", issue_id=issue_id),
+                    notification_text=_("The issue '%(issue_id)s' was not found", 
+                                        issue_id=issue_id),
                     host_name=config.host
                 )
             raise
@@ -67,7 +83,8 @@ def timeline():
         return render_template(
             'timeline_empty.html.jinja', 
             is_error=True, 
-            notification_text=_("Invalid issue ID or URL: 'issue_id'", issue_id=issue_id),
+            notification_text=_("Invalid issue ID or URL: '%(issue_id)s'", 
+                                issue_id=issue_id),
             host_name=config.host
         )
     except Exception as e:
@@ -75,9 +92,18 @@ def timeline():
         return render_template(
             'timeline_empty.html.jinja', 
             is_error=True, 
-            notification_text=f"Не удалось получить информацию по задаче '{issue_id}'. Обратитесь к {config.support_person} для устранения проблемы.",
+            notification_text=_("Unable to fetch information for the issue '%(issue_id)s'. Please contact '%(support_person)s' to solve the problem", 
+                                issue_id=issue_id, 
+                                support_person=config.support_person),
             host_name=config.host
         )
+    
+
+@app.context_processor
+def inject_conf_vars():
+    return {
+        'get_locale': get_locale,
+    }
 
 
 if __name__ == "__main__":
@@ -89,6 +115,8 @@ if __name__ == "__main__":
 
     config = YouTrackConfig.from_file(args.config)
     app.config['yt-config'] = config
+    app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+    app.secret_key = os.urandom(24)
 
     if config.debug:
         app.config["TEMPLATES_AUTO_RELOAD"] = True

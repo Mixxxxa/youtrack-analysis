@@ -85,15 +85,15 @@
 {%- endmacro %}
 
 {% set in_progress_placeholder %}
-<i class="fst-italic text-secondary">ещё в работе...</i>
+<i class="fst-italic text-secondary">{{ _('in progress...') }}</i>
 {% endset %}
 
 {% set not_started_placeholder %}
-<i class="fst-italic text-secondary">ещё не начинали...</i>
+<i class="fst-italic text-secondary">{{ _('not started yet...') }}</i>
 {% endset %}
 
 {% set null_value_placeholder %}
-<i class="fst-italic text-danger">ошибка API</i>
+<i class="fst-italic text-danger">{{ _('API error') }}</i>
 {% endset %}
 
 {% extends "base.html.jinja" %}
@@ -105,8 +105,8 @@
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
 <form class="input-group ms-auto" method="GET" action="" style="width: auto">
-    <input type="text" name="issue" class="form-control" placeholder="Введите id задачи..." aria-label="Введите id задачи" required>
-    <button type="submit" class="btn btn-success">Перейти</button>
+    <input type="text" name="issue" class="form-control" placeholder="{{ _('Enter issue ID...') }}" aria-label="{{ _('Enter issue ID...') }}" required>
+    <button type="submit" class="btn btn-success">{{ _('GO') }}</button>
 </form>
 {% endblock %}
 {% block content %}
@@ -116,19 +116,24 @@
 </div>
 <div class="badges mt-2">
 {% if is_resolved %}
-{{ badge(text='Закрыто', bg_color='var(--bs-secondary)') }}
+    {% set status_text = _('Resolved') %}
+    {{ badge(text=status_text, bg_color='var(--bs-secondary)') }}
 {% else %}
-{{ badge(text='В работе', bg_color='var(--bs-success)') }}
+    {% set status_text = _('Active') %}
+    {{ badge(text=status_text, bg_color='var(--bs-success)') }}
 {% endif %}
 {% if yt_errors %}
-{% set _yt_error_text = 'Во время получения данных из YouTrack обнаружены ошибки. Следующие данные могут быть неточными: ' ~ yt_errors|join(', ') ~ '.' %}
-{{ badge(text='Обнаружены ошибки YT API', bg_color='var(--bs-danger)', hover_text=_yt_error_text) }}
+    {% set _yt_error_text_template = _('Errors were detected while receiving data from YouTrack. The following data may be inaccurate: ') %}
+    {% set _yt_error_badge_text = _('Detected YT API error') %}
+    {{ badge(text=_yt_error_badge_text, 
+             bg_color='var(--bs-danger)', 
+             hover_text=_yt_error_text_template ~ yt_errors|join(', ') ~ '.') }}
 {% endif %}
 {% if tags | count %}
-<span style="display:inline-block; border-left: 1px solid #ccc; height: 1.5rem; vertical-align: middle; margin-left: 0.5rem;"></span>
+    <span style="display:inline-block; border-left: 1px solid #ccc; height: 1.5rem; vertical-align: middle; margin-left: 0.5rem;"></span>
 {% endif %}
 {% for tag in tags %}
-{{ badge(text=tag.text, bg_color=tag.bg_color, fg_color=tag.fg_color) }}
+    {{ badge(text=tag.text, bg_color=tag.bg_color, fg_color=tag.fg_color) }}
 {% endfor %}
 </div>
 <div class="graph-container">
@@ -136,34 +141,34 @@
 </div>
 <div class="row">
     <div class="col">
-        <p><b>Автор:</b> {{ author }}</p>
-        <p><b>Состояние:</b> {{ state }}</p>
-        <p><b>Assignee:</b> {{ current_assignee }}</p>
-        <p><b>Проект:</b> {{ project_name }}</p>
-        <p><b>Компонент:</b> {{ component }}</p>
+        <p><b>{{ _('Author') }}:</b> {{ author }}</p>
+        <p><b>{{ _('State') }}:</b> {{ state }}</p>
+        <p><b>{{ _('Assignee') }}:</b> {{ current_assignee }}</p>
+        <p><b>{{ _('Project') }}:</b> {{ project_name }}</p>
+        <p><b>{{ _('Component') }}:</b> {{ component }}</p>
     </div>
     <div class="col">
-        <p><b>Создано:</b> {{ creation_datetime }}</p>
-        <p><b>Взято в работу:</b> {{ started_datetime|default(not_started_placeholder, true)}}</p>
-        <p><b>Время реакции:</b> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text='Время от создания задачи до взятия в работу (первого перехода в In progress)') }}</p>
-        <p><b>Решено:</b> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
-        <p><b>Время решения задачи:</b> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text='Фактическое время от создания задачи до её закрытия') }}</p>
+        <p><b>{{ _('Created') }}:</b> {{ creation_datetime }}</p>
+        <p><b>{{ _('Taken in work') }}:</b> {{ started_datetime|default(not_started_placeholder, true)}}</p>
+        <p><b>{{ _('Reaction Time') }}:</b> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text=_('The time from creating a task to taking it to work (the first transition to In progress)')) }}</p>
+        <p><b>{{ _('Solved') }}:</b> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
+        <p><b>{{ _('Resolve time') }}:</b> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text=_('The actual time from the creation of the task to its closure')) }}</p>
     </div>
     <div class="col">
-        <p><b>Scope:</b> {{ scope|default(null_value_placeholder, true) }}</p>
-        <p><b>Spent Time:</b> {{ spent_time }}</p>
-        <p><b>Превышение Scope:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text='Разница между SpentTime и Scope') }}</p>
-        <p><b>Spent Time (чистый):</b> {{ spent_time_real }} {{ help_tooltip(text="Время записанное именно в ЭТОЙ задаче. Подробнее во вкладке 'Подзадачи'") }}</p>
-        <p><b>Spent Time (от подзадач):</b> {{subtasks.total}} {{ help_tooltip(text="Показывает сколько времени в текущей задаче получено от подзадач. Подробнее во вкладке 'Подзадачи'") }}</p>
+        <p><b>{{ _('Scope') }}:</b> {{ scope|default(null_value_placeholder, true) }}</p>
+        <p><b>{{ _('Spent Time') }}:</b> {{ spent_time }}</p>
+        <p><b>{{ _('Scope overrun') }}:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('The difference between SpentTime and Scope')) }}</p>
+        <p><b>{{ _('Spent Time (direct)') }}:</b> {{ spent_time_real }} {{ help_tooltip(text=_('The time recorded in THIS PARTICULAR task. For more information, see the Subtasks tab')) }}</p>
+        <p><b>{{ _('Spent Time (indirect)') }}:</b> {{subtasks.total}} {{ help_tooltip(text=_('Shows how much time in the current task is received from subtasks. For more information, see the Subtasks tab')) }}</p>
     </div>
 </div>
 <ul class="nav nav-tabs" id="myTab" role="tablist">
-    {{ table_nav_tab(id='details', text='Сводная таблица', is_active=true) }}
-    {{ table_nav_tab(id='by-people', text='По людям') }}
-    {{ table_nav_tab_with_counter(id='comments', text='Комментарии', counter_value=comments|count) }}
-    {{ table_nav_tab_with_counter(id='pauses', text='Простои', counter_value=pauses.entries|count) }}
-    {{ table_nav_tab_with_counter(id='overdues', text='Overdue', counter_value=overdues|count, is_danger= overdues|count > 0) }}
-    {{ table_nav_tab_with_counter(id='subtasks', text='Подзадачи', counter_value=subtasks.entries|count) }}
+    {{ table_nav_tab(id='details', text=_('Pivot table'), is_active=true) }}
+    {{ table_nav_tab(id='by-people', text=_('By people')) }}
+    {{ table_nav_tab_with_counter(id='comments', text=_('Comments'), counter_value=comments|count) }}
+    {{ table_nav_tab_with_counter(id='pauses', text=_('Pauses'), counter_value=pauses.entries|count) }}
+    {{ table_nav_tab_with_counter(id='overdues', text=_('Overdues'), counter_value=overdues|count, is_danger= overdues|count > 0) }}
+    {{ table_nav_tab_with_counter(id='subtasks', text=_('Subtasks'), counter_value=subtasks.entries|count) }}
 </ul>
 <div class="tab-content tab-content-custom mb-3" id="myTabContent">
     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
@@ -227,9 +232,9 @@
         <table id="comments-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">Автор</th>
-                    <th scope="col">Дата</th>
-                    <th scope="col">Текст комментария</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('Author') }}</th>
+                    <th scope="col">{{ _('Date') }}</th>
+                    <th scope="col">{{ _('Comment') }}</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -245,24 +250,25 @@
     </div>
     <div class="tab-pane fade" id="pauses-tab-pane" role="tabpanel" aria-labelledby="pauses-tab" tabindex="0">
         {% set pauses_info %}
-            Паузы в работе — это то время, пока задача находится в <strong>On
-                hold</strong>.<br />Графа <code>Фактическое время</code> показывает физическое
-            время между этими датами. Графа <code>Только рабочее время</code> выбирает из
-            <code>Фактическое время</code> промежутки с понедельника по пятницу с 9:00-13:00 и
-            14:00-18:00 без учета праздничных дней.<br />
-            <strong>Примечание</strong>: разница в одну секунду между рабочим и фактическим временем связана с 
-            особенностями подсчета (округлением до минут).
+        {% trans trimmed %}
+            Pauses are the time while the task is in <strong>On hold</strong>.<br />
+            Graph <code>Actual time</code> shows the physical time between these dates. 
+            Graph <code>Only the working time</code> selects from <code>Actual time</code> is from Monday to Friday from 9:00-13:00 and
+14:00-18:00, excluding holidays.<br />
+            <strong>Note:</strong> the difference of one second between the working time and the actual time is due to
+the peculiarities of the calculation (rounding to minutes).
+        {% endtrans %}
         {% endset %}
         {{ bs_info_accordion(id='pauses-info', title='Что такое простои (паузы)?', text=pauses_info) }}
         
         <table id="pauses-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
-                    <th scope="col">Начало</th>
-                    <th scope="col">Конец</th>
-                    <th scope="col">Фактическое время (1d=24h)</th>
-                    <th scope="col">Только рабочее время (1d=8h)</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('Name') }}</th>
+                    <th scope="col">{{ _('Begin') }}</th>
+                    <th scope="col">{{ _('End') }}</th>
+                    <th scope="col">{{ _('Actual time') }} (1d=24h)</th>
+                    <th scope="col">{{ _('Working hours only') }} (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
             </thead>
@@ -294,9 +300,9 @@
         <table id="overdues-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">№</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Дата</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('#') }}</th>
+                    <th scope="col">{{ _('Name') }}</th>
+                    <th scope="col">{{ _('Date') }}</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -321,11 +327,11 @@
         <table id="subtasks-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">№</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('#') }}</th>
                     <th scope="col">id</th>
-                    <th scope="col">Название</th>
-                    <th scope="col">State</th>
-                    <th scope="col">Spent Time (1d=8h)</th>
+                    <th scope="col">{{ _('Title') }}</th>
+                    <th scope="col">{{ _('State') }}</th>
+                    <th scope="col">{{ _('Spent Time') }} (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
             </thead>
@@ -465,7 +471,7 @@
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, 'Всего в ' + group, 2);
+                    addCell(tr, "_('Total2')" + group, 2);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
                     return tr;
@@ -529,7 +535,7 @@
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, 'Всего у ' + group, 3);
+                    addCell(tr, "{{ _('Total by') }}" + group, 3);
                     addCell(tr, physicalTime);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
@@ -549,7 +555,7 @@
                 dataSrc: 1,
                 startRender: function (rows, group) {
                     let tr = document.createElement('tr');
-                    addCell(tr, 'Всего у ' + group + ': ' + rows.data().length, 3);
+                    addCell(tr, "{{ _('Total by') }}" + group + ': ' + rows.data().length, 3);
                     return tr;
                 }
             }
