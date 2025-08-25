@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-08-25 03:51+0300\n"
-"PO-Revision-Date: 2025-08-25 04:15+0300\n"
+"PO-Revision-Date: 2025-08-25 04:26+0300\n"
 "Last-Translator: Mikhail Gelvikh\n"
 "Language-Team: en <LL@li.org>\n"
 "Language: en\n"
@@ -21,9 +21,7 @@ msgstr ""
 
 #: main.py:67
 msgid "base.service_wip"
-msgstr ""
-"Service works in test mode. In case of errors or incorrect data ask %"
-"(support_person)s for help."
+msgstr "The service is running in test mode. In case of errors or incorrect data, please contact %(support_person)s for assistance."
 
 #: main.py:76
 msgid "base.issue_not_found_with_id"
@@ -35,9 +33,7 @@ msgstr "Invalid issue ID or URL: '%(issue_id)s'"
 
 #: main.py:95
 msgid "base.unable_to_get_info_with_id_and_person"
-msgstr ""
-"Unable to fetch information for the issue '%(issue_id)s'. Please contact "
-"'%(support_person)s' to solve the problem"
+msgstr "Unable to retrieve information for issue '%(issue_id)s'. Please contact %(support_person)s to resolve the problem."
 
 #: pages/timeline.py:203
 msgid "timeline.chart.legend.other"
@@ -81,7 +77,7 @@ msgstr "As system"
 
 #: templates/base.html.jinja:234
 msgid "base.menu_title"
-msgstr "Work modes"
+msgstr "Work Modes"
 
 #: templates/timeline.html.jinja:88
 msgid "issue.placeholders.in_progress"
@@ -117,9 +113,7 @@ msgstr "Active"
 
 #: templates/timeline.html.jinja:131
 msgid "timeline.issue.tags.api_error_hover"
-msgstr ""
-"Errors were detected while receiving data from YouTrack. The following "
-"data may be inaccurate: "
+msgstr "Errors were detected while retrieving data from YouTrack. The following data may be inaccurate: "
 
 #: templates/timeline.html.jinja:132
 msgid "timeline.issue.tags.api_error"
@@ -159,9 +153,7 @@ msgstr "Reaction Time"
 
 #: templates/timeline.html.jinja:158
 msgid "issue.reaction_duration.help_text"
-msgstr ""
-"The time from creating a task to taking it to work (the first transition "
-"to In Progress or Review)"
+msgstr "The time from task creation to when work begins (the first transition to In Progress or Review)"
 
 #: templates/timeline.html.jinja:159
 msgid "issue.resolve_datetime"
@@ -169,11 +161,11 @@ msgstr "Resolved"
 
 #: templates/timeline.html.jinja:160
 msgid "issue.resolve_duration"
-msgstr "Resolve time"
+msgstr "Resolution Time"
 
 #: templates/timeline.html.jinja:160
 msgid "issue.resolve_duration.help_text"
-msgstr "The actual time from the creation of the task to its closure"
+msgstr "The actual time from task creation until its closure"
 
 #: templates/timeline.html.jinja:163
 msgid "issue.scope"
@@ -185,39 +177,35 @@ msgstr "Spent Time"
 
 #: templates/timeline.html.jinja:165
 msgid "issue.scope_overrun"
-msgstr "Scope overrun"
+msgstr "Scope Overrun"
 
 #: templates/timeline.html.jinja:165
 msgid "issue.scope_overrun.help_text"
-msgstr "The difference between SpentTime and Scope"
+msgstr "The difference between Spent Time and Scope"
 
 #: templates/timeline.html.jinja:166
 msgid "issue.spent_time_direct"
-msgstr "Spent Time (direct)"
+msgstr "Direct Spent Time"
 
 #: templates/timeline.html.jinja:166
 msgid "issue.spent_time_direct.help_text"
-msgstr ""
-"The time recorded in THIS PARTICULAR task. For more information, see the "
-"'Subtasks' tab"
+msgstr "The time logged directly on this task. For more information, see the 'Subtasks' tab"
 
 #: templates/timeline.html.jinja:167
 msgid "issue.spent_time_subtasks"
-msgstr "Spent Time (from subtasks)"
+msgstr "Spent Time (from Subtasks)"
 
 #: templates/timeline.html.jinja:167
 msgid "issue.spent_time_subtasks.help_text"
-msgstr ""
-"Shows how much time in the current task is received from subtasks. For "
-"more information, see the 'Subtasks' tab"
+msgstr "Shows the amount of time for the current task aggregated from its subtasks. For more information, see the 'Subtasks' tab"
 
 #: templates/timeline.html.jinja:171
 msgid "timeline.tables.pivot.name"
-msgstr "Pivot table"
+msgstr "Pivot Table"
 
 #: templates/timeline.html.jinja:172
 msgid "timeline.tables.by_people.name"
-msgstr "By people"
+msgstr "By People"
 
 #: templates/timeline.html.jinja:173
 msgid "timeline.tables.comments.name"
@@ -225,7 +213,7 @@ msgstr "Comments"
 
 #: templates/timeline.html.jinja:174
 msgid "timeline.tables.pauses.name"
-msgstr "On-hold periods"
+msgstr "On-Hold Periods"
 
 #: templates/timeline.html.jinja:175
 msgid "timeline.tables.overdues.name"
@@ -258,18 +246,11 @@ msgstr "Comment"
 
 #: templates/timeline.html.jinja:257
 msgid "timeline.tables.pauses.help_title"
-msgstr "What the pauses is?"
+msgstr "What are on-hold periods?"
 
 #: templates/timeline.html.jinja:257
 msgid "timeline.tables.pauses.help_text"
-msgstr ""
-"Pauses are the time while the task is in <strong>On hold</strong>.<br /"
-">Graph <code>Actual time</code> shows the physical time between these "
-"dates. Graph <code>Only the working time</code> selects from "
-"<code>Actual time</code> is from Monday to Friday from 9:00-13:00 and "
-"14:00-18:00, excluding holidays.<br /><strong>Note:</strong> the "
-"difference of one second between the working time and the actual time is "
-"due to the peculiarities of the calculation (rounding to minutes)."
+msgstr "On-hold periods represent the time during which the task is put on hold.<br />The <code>Actual time</code> graph shows the total elapsed time between these dates. The <code>Working hours only</code> graph displays the time within standard working hours (Monday to Friday, 9:00–13:00 and 14:00–18:00), excluding holidays.<br /><strong>Note:</strong> a one-second difference between the working time and the actual time may occur due to rounding to minutes."
 
 #: templates/timeline.html.jinja:262
 msgid "timeline.tables.pauses.begin"
@@ -281,11 +262,11 @@ msgstr "End"
 
 #: templates/timeline.html.jinja:264
 msgid "timeline.tables.pauses.actual_time"
-msgstr "Actual time"
+msgstr "Actual Time"
 
 #: templates/timeline.html.jinja:265
 msgid "timeline.tables.pauses.wh_only"
-msgstr "Working time only"
+msgstr "Working Hours Only"
 
 #: templates/timeline.html.jinja:297 templates/timeline.html.jinja:319
 msgid "timeline.tables.general.counter"
@@ -297,16 +278,11 @@ msgstr "Date"
 
 #: templates/timeline.html.jinja:314
 msgid "timeline.tables.subtasks.help_title"
-msgstr "How do Subtasks affect Spent Time?"
+msgstr "How do subtasks affect Spent Time?"
 
 #: templates/timeline.html.jinja:314
 msgid "timeline.tables.subtasks.help_text"
-msgstr ""
-"YouTrack implicitly adds the <code>Spent Time</code> of each subtask to "
-"the total <code>Spent Time</code>. Because of this, it may seem that the "
-"task has been delayed, but in fact, time has accumulated in another "
-"place altogether. The table below shows each subtask (if any), as well "
-"as its <code>Spent Time</code> and percentage of the total."
+msgstr "YouTrack automatically adds the <code>Spent Time</code> of each subtask to the total <code>Spent Time</code>. This may make it seem as if the task is delayed, while in fact, the time is recorded separately. The table below displays each subtask (if any), along with its <code>Spent Time</code> and its percentage of the total."
 
 #: templates/timeline.html.jinja:321
 msgid "timeline.tables.subtasks.task_name"
@@ -326,4 +302,4 @@ msgstr "Total for"
 
 #: templates/timeline_empty.html.jinja:19
 msgid "timeline.examples_header"
-msgstr "Correct entries examples:"
+msgstr "Examples of correct entries:"
