@@ -64,7 +64,7 @@ def timeline(language='en'):
             return render_template(
                 'timeline_empty.html.jinja', 
                 is_error=False, 
-                notification_text=_("Service works in test mode. In case of errors or incorrect data ask '%(support_person)s' for help", support_person=config.support_person),
+                notification_text=_('base.service_wip', support_person=config.support_person),
                 host_name=config.host
             )
         except requests.HTTPError as e:
@@ -73,7 +73,7 @@ def timeline(language='en'):
                 return render_template(
                     'timeline_empty.html.jinja', 
                     is_error=True, 
-                    notification_text=_("The issue '%(issue_id)s' was not found", 
+                    notification_text=_('base.issue_not_found_with_id', 
                                         issue_id=issue_id),
                     host_name=config.host
                 )
@@ -83,7 +83,7 @@ def timeline(language='en'):
         return render_template(
             'timeline_empty.html.jinja', 
             is_error=True, 
-            notification_text=_("Invalid issue ID or URL: '%(issue_id)s'", 
+            notification_text=_("base.invalid_issue_id_or_url", 
                                 issue_id=issue_id),
             host_name=config.host
         )
@@ -92,7 +92,7 @@ def timeline(language='en'):
         return render_template(
             'timeline_empty.html.jinja', 
             is_error=True, 
-            notification_text=_("Unable to fetch information for the issue '%(issue_id)s'. Please contact '%(support_person)s' to solve the problem", 
+            notification_text=_("base.unable_to_get_info_with_id_and_person", 
                                 issue_id=issue_id, 
                                 support_person=config.support_person),
             host_name=config.host

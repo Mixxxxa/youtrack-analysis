@@ -85,15 +85,15 @@
 {%- endmacro %}
 
 {% set in_progress_placeholder %}
-<i class="fst-italic text-secondary">{{ _('in progress...') }}</i>
+<i class="fst-italic text-secondary">{{ _('issue.placeholders.in_progress') }}</i>
 {% endset %}
 
 {% set not_started_placeholder %}
-<i class="fst-italic text-secondary">{{ _('not started yet...') }}</i>
+<i class="fst-italic text-secondary">{{ _('issue.placeholders.not_started') }}</i>
 {% endset %}
 
 {% set null_value_placeholder %}
-<i class="fst-italic text-danger">{{ _('API error') }}</i>
+<i class="fst-italic text-danger">{{ _('issue.placeholders.api_error') }}</i>
 {% endset %}
 
 {% extends "base.html.jinja" %}
@@ -105,8 +105,13 @@
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
 <form class="input-group ms-auto" method="GET" action="" style="width: auto">
-    <input type="text" name="issue" class="form-control" placeholder="{{ _('Enter issue ID...') }}" aria-label="{{ _('Enter issue ID...') }}" required>
-    <button type="submit" class="btn btn-success">{{ _('GO') }}</button>
+    <input type="text" 
+           name="issue" 
+           class="form-control" 
+           placeholder="{{ _('timeline.issue_input.placeholder') }}" 
+           aria-label="{{ _('timeline.issue_input.hover') }}" 
+           required>
+    <button type="submit" class="btn btn-success">{{ _('timeline.issue_input.confirm') }}</button>
 </form>
 {% endblock %}
 {% block content %}
@@ -116,15 +121,15 @@
 </div>
 <div class="badges mt-2">
 {% if is_resolved %}
-    {% set status_text = _('Resolved') %}
+    {% set status_text = _('timeline.issue.tags.resolved') %}
     {{ badge(text=status_text, bg_color='var(--bs-secondary)') }}
 {% else %}
-    {% set status_text = _('Active') %}
+    {% set status_text = _('timeline.issue.tags.active') %}
     {{ badge(text=status_text, bg_color='var(--bs-success)') }}
 {% endif %}
 {% if yt_errors %}
-    {% set _yt_error_text_template = _('Errors were detected while receiving data from YouTrack. The following data may be inaccurate: ') %}
-    {% set _yt_error_badge_text = _('Detected YT API error') %}
+    {% set _yt_error_text_template = _('timeline.issue.tags.api_error_hover') %}
+    {% set _yt_error_badge_text = _('timeline.issue.tags.api_error') %}
     {{ badge(text=_yt_error_badge_text, 
              bg_color='var(--bs-danger)', 
              hover_text=_yt_error_text_template ~ yt_errors|join(', ') ~ '.') }}
@@ -141,41 +146,41 @@
 </div>
 <div class="row">
     <div class="col">
-        <p><b>{{ _('Author') }}:</b> {{ author }}</p>
-        <p><b>{{ _('State') }}:</b> {{ state }}</p>
-        <p><b>{{ _('Assignee') }}:</b> {{ current_assignee }}</p>
-        <p><b>{{ _('Project') }}:</b> {{ project_name }}</p>
-        <p><b>{{ _('Component') }}:</b> {{ component }}</p>
+        <p><b>{{ _('issue.author') }}:</b> {{ author }}</p>
+        <p><b>{{ _('issue.state') }}:</b> {{ state }}</p>
+        <p><b>{{ _('issue.assignee') }}:</b> {{ current_assignee }}</p>
+        <p><b>{{ _('issue.project') }}:</b> {{ project_name }}</p>
+        <p><b>{{ _('issue.component') }}:</b> {{ component }}</p>
     </div>
     <div class="col">
-        <p><b>{{ _('Created') }}:</b> {{ creation_datetime }}</p>
-        <p><b>{{ _('Taken in work') }}:</b> {{ started_datetime|default(not_started_placeholder, true)}}</p>
-        <p><b>{{ _('Reaction Time') }}:</b> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text=_('The time from creating a task to taking it to work (the first transition to In progress)')) }}</p>
-        <p><b>{{ _('Solved') }}:</b> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
-        <p><b>{{ _('Resolve time') }}:</b> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text=_('The actual time from the creation of the task to its closure')) }}</p>
+        <p><b>{{ _('issue.created') }}:</b> {{ creation_datetime }}</p>
+        <p><b>{{ _('issue.started_datetime') }}:</b> {{ started_datetime|default(not_started_placeholder, true)}}</p>
+        <p><b>{{ _('issue.reaction_duration') }}:</b> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text=_('issue.reaction_duration.help_text')) }}</p>
+        <p><b>{{ _('issue.resolve_datetime') }}:</b> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
+        <p><b>{{ _('issue.resolve_duration') }}:</b> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text=_('issue.resolve_duration.help_text')) }}</p>
     </div>
     <div class="col">
-        <p><b>{{ _('Scope') }}:</b> {{ scope|default(null_value_placeholder, true) }}</p>
-        <p><b>{{ _('Spent Time') }}:</b> {{ spent_time }}</p>
-        <p><b>{{ _('Scope overrun') }}:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('The difference between SpentTime and Scope')) }}</p>
-        <p><b>{{ _('Spent Time (direct)') }}:</b> {{ spent_time_real }} {{ help_tooltip(text=_('The time recorded in THIS PARTICULAR task. For more information, see the Subtasks tab')) }}</p>
-        <p><b>{{ _('Spent Time (indirect)') }}:</b> {{subtasks.total}} {{ help_tooltip(text=_('Shows how much time in the current task is received from subtasks. For more information, see the Subtasks tab')) }}</p>
+        <p><b>{{ _('issue.scope') }}:</b> {{ scope|default(null_value_placeholder, true) }}</p>
+        <p><b>{{ _('issue.spent_time') }}:</b> {{ spent_time }}</p>
+        <p><b>{{ _('issue.scope_overrun') }}:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('issue.scope_overrun.help_text')) }}</p>
+        <p><b>{{ _('issue.spent_time_direct') }}:</b> {{ spent_time_real }} {{ help_tooltip(text=_('issue.spent_time_direct.help_text')) }}</p>
+        <p><b>{{ _('issue.spent_time_subtasks') }}:</b> {{subtasks.total}} {{ help_tooltip(text=_('issue.spent_time_subtasks.help_text')) }}</p>
     </div>
 </div>
 <ul class="nav nav-tabs" id="myTab" role="tablist">
-    {{ table_nav_tab(id='details', text=_('Pivot table'), is_active=true) }}
-    {{ table_nav_tab(id='by-people', text=_('By people')) }}
-    {{ table_nav_tab_with_counter(id='comments', text=_('Comments'), counter_value=comments|count) }}
-    {{ table_nav_tab_with_counter(id='pauses', text=_('Pauses'), counter_value=pauses.entries|count) }}
-    {{ table_nav_tab_with_counter(id='overdues', text=_('Overdues'), counter_value=overdues|count, is_danger= overdues|count > 0) }}
-    {{ table_nav_tab_with_counter(id='subtasks', text=_('Subtasks'), counter_value=subtasks.entries|count) }}
+    {{ table_nav_tab(id='details', text=_('timeline.tables.pivot.name'), is_active=true) }}
+    {{ table_nav_tab(id='by-people', text=_('timeline.tables.by_people.name')) }}
+    {{ table_nav_tab_with_counter(id='comments', text=_('timeline.tables.comments.name'), counter_value=comments|count) }}
+    {{ table_nav_tab_with_counter(id='pauses', text=_('timeline.tables.pauses.name'), counter_value=pauses.entries|count) }}
+    {{ table_nav_tab_with_counter(id='overdues', text=_('timeline.tables.overdues.name'), counter_value=overdues|count, is_danger= overdues|count > 0) }}
+    {{ table_nav_tab_with_counter(id='subtasks', text=_('timeline.tables.subtasks.name'), counter_value=subtasks.entries|count) }}
 </ul>
 <div class="tab-content tab-content-custom mb-3" id="myTabContent">
     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
         <table id="details-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.name') }}</th>
                     <th scope="col">State</th>
                     <th scope="col">Spent Time (1d=8h)</th>
                     <th scope="col">%</th>
@@ -205,7 +210,7 @@
         <table id="by-people-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">Name</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.comments.author') }}</th>
                     <th scope="col">Spent Time (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
@@ -232,9 +237,9 @@
         <table id="comments-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('Author') }}</th>
-                    <th scope="col">{{ _('Date') }}</th>
-                    <th scope="col">{{ _('Comment') }}</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.comments.author') }}</th>
+                    <th scope="col">{{ _('timeline.tables.comments.date') }}</th>
+                    <th scope="col">{{ _('timeline.tables.comments.comment') }}</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -249,26 +254,15 @@
         </table>
     </div>
     <div class="tab-pane fade" id="pauses-tab-pane" role="tabpanel" aria-labelledby="pauses-tab" tabindex="0">
-        {% set pauses_info %}
-        {% trans trimmed %}
-            Pauses are the time while the task is in <strong>On hold</strong>.<br />
-            Graph <code>Actual time</code> shows the physical time between these dates. 
-            Graph <code>Only the working time</code> selects from <code>Actual time</code> is from Monday to Friday from 9:00-13:00 and
-14:00-18:00, excluding holidays.<br />
-            <strong>Note:</strong> the difference of one second between the working time and the actual time is due to
-the peculiarities of the calculation (rounding to minutes).
-        {% endtrans %}
-        {% endset %}
-        {{ bs_info_accordion(id='pauses-info', title='Что такое простои (паузы)?', text=pauses_info) }}
-        
+        {{ bs_info_accordion(id='pauses-info', title=_('timeline.tables.pauses.help_title'), text=_('timeline.tables.pauses.help_text')) }}
         <table id="pauses-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('Name') }}</th>
-                    <th scope="col">{{ _('Begin') }}</th>
-                    <th scope="col">{{ _('End') }}</th>
-                    <th scope="col">{{ _('Actual time') }} (1d=24h)</th>
-                    <th scope="col">{{ _('Working hours only') }} (1d=8h)</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.name') }}</th>
+                    <th scope="col">{{ _('timeline.tables.pauses.begin') }}</th>
+                    <th scope="col">{{ _('timeline.tables.pauses.end') }}</th>
+                    <th scope="col">{{ _('timeline.tables.pauses.actual_time') }} (1d=24h)</th>
+                    <th scope="col">{{ _('timeline.tables.pauses.wh_only') }} (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
             </thead>
@@ -300,9 +294,9 @@ the peculiarities of the calculation (rounding to minutes).
         <table id="overdues-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('#') }}</th>
-                    <th scope="col">{{ _('Name') }}</th>
-                    <th scope="col">{{ _('Date') }}</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.counter') }}</th>
+                    <th scope="col">{{ _('timeline.tables.general.name') }}</th>
+                    <th scope="col">{{ _('timeline.tables.general.date') }}</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -317,21 +311,16 @@ the peculiarities of the calculation (rounding to minutes).
         </table>
     </div>
     <div class="tab-pane fade" id="subtasks-tab-pane" role="tabpanel" aria-labelledby="subtasks-tab" tabindex="0">
-        {% set subtasks_info %}
-            YouTrack неявно добавляет <code>Spent Time</code> каждой подзадачи в общий <code>Spent Time</code>. 
-            Из-за этого, может показаться что задача затянулась, а по факту, время накапало вообще в другом месте.
-            Таблица ниже показывает каждую подзадачу (если есть), а также её <code>Spent Time</code> и процент от общего.
-        {% endset %}
-        {{ bs_info_accordion(id='subtasks-info', title='Как подзадачи влияют на Spent Time?', text=subtasks_info) }}
+        {{ bs_info_accordion(id='subtasks-info', title=_('timeline.tables.subtasks.help_title'), text=_('timeline.tables.subtasks.help_text')) }}
         
         <table id="subtasks-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('#') }}</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.counter') }}</th>
                     <th scope="col">id</th>
-                    <th scope="col">{{ _('Title') }}</th>
-                    <th scope="col">{{ _('State') }}</th>
-                    <th scope="col">{{ _('Spent Time') }} (1d=8h)</th>
+                    <th scope="col">{{ _('timeline.tables.subtasks.task_name') }}</th>
+                    <th scope="col">{{ _('issue.state') }}</th>
+                    <th scope="col">Spent Time (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
             </thead>
@@ -471,7 +460,7 @@ the peculiarities of the calculation (rounding to minutes).
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, "_('Total2')" + group, 2);
+                    addCell(tr, "{{ _('timeline.tables.pivot.total_row_prefix') }}" + group, 2);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
                     return tr;
@@ -535,7 +524,7 @@ the peculiarities of the calculation (rounding to minutes).
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('Total by') }}" + group, 3);
+                    addCell(tr, "{{ _('timeline.tables.pauses.total_row_prefix') }}" + group, 3);
                     addCell(tr, physicalTime);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
@@ -555,7 +544,7 @@ the peculiarities of the calculation (rounding to minutes).
                 dataSrc: 1,
                 startRender: function (rows, group) {
                     let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('Total by') }}" + group + ': ' + rows.data().length, 3);
+                    addCell(tr, "{{ _('timeline.tables.overdues.total_row_prefix') }}" + group + ': ' + rows.data().length, 3);
                     return tr;
                 }
             }
