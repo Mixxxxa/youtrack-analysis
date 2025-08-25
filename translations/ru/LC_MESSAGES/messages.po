@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-08-25 03:51+0300\n"
-"PO-Revision-Date: 2025-08-25 03:56+0300\n"
+"PO-Revision-Date: 2025-08-25 04:15+0300\n"
 "Last-Translator: Mikhail Gelvikh\n"
 "Language-Team: ru <LL@li.org>\n"
 "Language: ru\n"
@@ -32,7 +32,7 @@ msgstr "Задача с ID '%(issue_id)s' не найдена"
 
 #: main.py:86
 msgid "base.invalid_issue_id_or_url"
-msgstr "Неправильный ID или URL задачи: '{issue_id}'"
+msgstr "Неправильный ID или URL задачи: '%(issue_id)s'"
 
 #: main.py:95
 msgid "base.unable_to_get_info_with_id_and_person"

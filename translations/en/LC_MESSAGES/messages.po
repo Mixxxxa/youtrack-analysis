@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-08-25 03:51+0300\n"
-"PO-Revision-Date: 2025-08-25 03:55+0300\n"
+"PO-Revision-Date: 2025-08-25 04:15+0300\n"
 "Last-Translator: Mikhail Gelvikh\n"
 "Language-Team: en <LL@li.org>\n"
 "Language: en\n"
@@ -53,7 +53,7 @@ msgstr "Comments"
 
 #: pages/timeline.py:245
 msgid "timeline.chart.legend.started_datetime"
-msgstr "Taken in work"
+msgstr "Taken into work"
 
 #: pages/timeline.py:255
 msgid "timeline.chart.legend.created_datetime"
@@ -105,7 +105,7 @@ msgstr "Enter issue ID or its URL"
 
 #: templates/timeline.html.jinja:114 templates/timeline_empty.html.jinja:16
 msgid "timeline.issue_input.confirm"
-msgstr "GO"
+msgstr "Submit"
 
 #: templates/timeline.html.jinja:124
 msgid "timeline.issue.tags.resolved"
@@ -117,13 +117,13 @@ msgstr "Active"
 
 #: templates/timeline.html.jinja:131
 msgid "timeline.issue.tags.api_error_hover"
-msgstr "YT API error detected"
-
-#: templates/timeline.html.jinja:132
-msgid "timeline.issue.tags.api_error"
 msgstr ""
 "Errors were detected while receiving data from YouTrack. The following "
 "data may be inaccurate: "
+
+#: templates/timeline.html.jinja:132
+msgid "timeline.issue.tags.api_error"
+msgstr "YT API error detected"
 
 #: templates/timeline.html.jinja:149
 msgid "issue.author"
@@ -151,7 +151,7 @@ msgstr "Created"
 
 #: templates/timeline.html.jinja:157
 msgid "issue.started_datetime"
-msgstr "Taken in work"
+msgstr "Taken into work"
 
 #: templates/timeline.html.jinja:158
 msgid "issue.reaction_duration"
@@ -165,7 +165,7 @@ msgstr ""
 
 #: templates/timeline.html.jinja:159
 msgid "issue.resolve_datetime"
-msgstr "Solved"
+msgstr "Resolved"
 
 #: templates/timeline.html.jinja:160
 msgid "issue.resolve_duration"
@@ -193,7 +193,7 @@ msgstr "The difference between SpentTime and Scope"
 
 #: templates/timeline.html.jinja:166
 msgid "issue.spent_time_direct"
-msgstr "issue.spent_time_direct"
+msgstr "Spent Time (direct)"
 
 #: templates/timeline.html.jinja:166
 msgid "issue.spent_time_direct.help_text"
@@ -225,7 +225,7 @@ msgstr "Comments"
 
 #: templates/timeline.html.jinja:174
 msgid "timeline.tables.pauses.name"
-msgstr "Pauses"
+msgstr "On-hold periods"
 
 #: templates/timeline.html.jinja:175
 msgid "timeline.tables.overdues.name"
@@ -285,7 +285,7 @@ msgstr "Actual time"
 
 #: templates/timeline.html.jinja:265
 msgid "timeline.tables.pauses.wh_only"
-msgstr "Working hours only"
+msgstr "Working time only"
 
 #: templates/timeline.html.jinja:297 templates/timeline.html.jinja:319
 msgid "timeline.tables.general.counter"
@@ -314,15 +314,15 @@ msgstr "Subtask"
 
 #: templates/timeline.html.jinja:463
 msgid "timeline.tables.pivot.total_row_prefix"
-msgstr "Total in"
+msgstr "Total for"
 
 #: templates/timeline.html.jinja:527
 msgid "timeline.tables.pauses.total_row_prefix"
-msgstr "Total by"
+msgstr "Total for"
 
 #: templates/timeline.html.jinja:547
 msgid "timeline.tables.overdues.total_row_prefix"
-msgstr "Total by"
+msgstr "Total for"
 
 #: templates/timeline_empty.html.jinja:19
 msgid "timeline.examples_header"
