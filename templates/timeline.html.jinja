@@ -181,7 +181,7 @@
             <thead>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.name') }}</th>
-                    <th scope="col">State</th>
+                    <th scope="col">{{ _('timeline.tables.general.state') }}</th>
                     <th scope="col">Spent Time (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
@@ -210,7 +210,7 @@
         <table id="by-people-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
-                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.comments.author') }}</th>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.name') }}</th>
                     <th scope="col">Spent Time (1d=8h)</th>
                     <th scope="col">%</th>
                 </tr>
@@ -460,7 +460,7 @@
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('timeline.tables.pivot.total_row_prefix') }}" + group, 2);
+                    addCell(tr, "{{ _('timeline.tables.pivot.total_row_prefix') }} " + group, 2);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
                     return tr;
@@ -524,7 +524,7 @@
                     businessTime = convertSecondsToWorkTime(businessTime, true);
 
                     let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('timeline.tables.pauses.total_row_prefix') }}" + group, 3);
+                    addCell(tr, "{{ _('timeline.tables.pauses.total_row_prefix') }} " + group, 3);
                     addCell(tr, physicalTime);
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
@@ -544,7 +544,7 @@
                 dataSrc: 1,
                 startRender: function (rows, group) {
                     let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('timeline.tables.overdues.total_row_prefix') }}" + group + ': ' + rows.data().length, 3);
+                    addCell(tr, "{{ _('timeline.tables.overdues.total_row_prefix') }} " + group + ': ' + rows.data().length, 3);
                     return tr;
                 }
             }

@@ -1,0 +1,329 @@
+# English translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-25 03:51+0300\n"
+"PO-Revision-Date: 2025-08-25 03:55+0300\n"
+"Last-Translator: Mikhail Gelvikh\n"
+"Language-Team: en <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.6\n"
+
+#: main.py:67
+msgid "base.service_wip"
+msgstr ""
+"Service works in test mode. In case of errors or incorrect data ask %"
+"(support_person)s for help."
+
+#: main.py:76
+msgid "base.issue_not_found_with_id"
+msgstr "The issue '%(issue_id)s' was not found"
+
+#: main.py:86
+msgid "base.invalid_issue_id_or_url"
+msgstr "Invalid issue ID or URL: '%(issue_id)s'"
+
+#: main.py:95
+msgid "base.unable_to_get_info_with_id_and_person"
+msgstr ""
+"Unable to fetch information for the issue '%(issue_id)s'. Please contact "
+"'%(support_person)s' to solve the problem"
+
+#: pages/timeline.py:203
+msgid "timeline.chart.legend.other"
+msgstr "Other"
+
+#: pages/timeline.py:204
+msgid "timeline.chart.legend.assignee"
+msgstr "Assignee"
+
+#: pages/timeline.py:212
+msgid "timeline.chart.legend.comments"
+msgstr "Comments"
+
+#: pages/timeline.py:245
+msgid "timeline.chart.legend.started_datetime"
+msgstr "Taken in work"
+
+#: pages/timeline.py:255
+msgid "timeline.chart.legend.created_datetime"
+msgstr "Created"
+
+#: pages/timeline.py:265
+msgid "timeline.chart.legend.resolved_datetime"
+msgstr "Resolved"
+
+#: templates/base.html.jinja:199
+msgid "base.menu_button"
+msgstr "Menu"
+
+#: templates/base.html.jinja:211
+msgid "theme_selector.light"
+msgstr "Light"
+
+#: templates/base.html.jinja:216
+msgid "theme_selector.dark"
+msgstr "Dark"
+
+#: templates/base.html.jinja:220
+msgid "theme_selector.as_system"
+msgstr "As system"
+
+#: templates/base.html.jinja:234
+msgid "base.menu_title"
+msgstr "Work modes"
+
+#: templates/timeline.html.jinja:88
+msgid "issue.placeholders.in_progress"
+msgstr "in progress..."
+
+#: templates/timeline.html.jinja:92
+msgid "issue.placeholders.not_started"
+msgstr "not started yet..."
+
+#: templates/timeline.html.jinja:96
+msgid "issue.placeholders.api_error"
+msgstr "API error"
+
+#: templates/timeline.html.jinja:111 templates/timeline_empty.html.jinja:14
+msgid "timeline.issue_input.placeholder"
+msgstr "Enter issue ID"
+
+#: templates/timeline.html.jinja:112 templates/timeline_empty.html.jinja:15
+msgid "timeline.issue_input.hover"
+msgstr "Enter issue ID or its URL"
+
+#: templates/timeline.html.jinja:114 templates/timeline_empty.html.jinja:16
+msgid "timeline.issue_input.confirm"
+msgstr "GO"
+
+#: templates/timeline.html.jinja:124
+msgid "timeline.issue.tags.resolved"
+msgstr "Resolved"
+
+#: templates/timeline.html.jinja:127
+msgid "timeline.issue.tags.active"
+msgstr "Active"
+
+#: templates/timeline.html.jinja:131
+msgid "timeline.issue.tags.api_error_hover"
+msgstr "YT API error detected"
+
+#: templates/timeline.html.jinja:132
+msgid "timeline.issue.tags.api_error"
+msgstr ""
+"Errors were detected while receiving data from YouTrack. The following "
+"data may be inaccurate: "
+
+#: templates/timeline.html.jinja:149
+msgid "issue.author"
+msgstr "Author"
+
+#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:322
+msgid "issue.state"
+msgstr "State"
+
+#: templates/timeline.html.jinja:151
+msgid "issue.assignee"
+msgstr "Assignee"
+
+#: templates/timeline.html.jinja:152
+msgid "issue.project"
+msgstr "Project"
+
+#: templates/timeline.html.jinja:153
+msgid "issue.component"
+msgstr "Component"
+
+#: templates/timeline.html.jinja:156
+msgid "issue.created"
+msgstr "Created"
+
+#: templates/timeline.html.jinja:157
+msgid "issue.started_datetime"
+msgstr "Taken in work"
+
+#: templates/timeline.html.jinja:158
+msgid "issue.reaction_duration"
+msgstr "Reaction Time"
+
+#: templates/timeline.html.jinja:158
+msgid "issue.reaction_duration.help_text"
+msgstr ""
+"The time from creating a task to taking it to work (the first transition "
+"to In Progress or Review)"
+
+#: templates/timeline.html.jinja:159
+msgid "issue.resolve_datetime"
+msgstr "Solved"
+
+#: templates/timeline.html.jinja:160
+msgid "issue.resolve_duration"
+msgstr "Resolve time"
+
+#: templates/timeline.html.jinja:160
+msgid "issue.resolve_duration.help_text"
+msgstr "The actual time from the creation of the task to its closure"
+
+#: templates/timeline.html.jinja:163
+msgid "issue.scope"
+msgstr "Scope"
+
+#: templates/timeline.html.jinja:164
+msgid "issue.spent_time"
+msgstr "Spent Time"
+
+#: templates/timeline.html.jinja:165
+msgid "issue.scope_overrun"
+msgstr "Scope overrun"
+
+#: templates/timeline.html.jinja:165
+msgid "issue.scope_overrun.help_text"
+msgstr "The difference between SpentTime and Scope"
+
+#: templates/timeline.html.jinja:166
+msgid "issue.spent_time_direct"
+msgstr "issue.spent_time_direct"
+
+#: templates/timeline.html.jinja:166
+msgid "issue.spent_time_direct.help_text"
+msgstr ""
+"The time recorded in THIS PARTICULAR task. For more information, see the "
+"'Subtasks' tab"
+
+#: templates/timeline.html.jinja:167
+msgid "issue.spent_time_subtasks"
+msgstr "Spent Time (from subtasks)"
+
+#: templates/timeline.html.jinja:167
+msgid "issue.spent_time_subtasks.help_text"
+msgstr ""
+"Shows how much time in the current task is received from subtasks. For "
+"more information, see the 'Subtasks' tab"
+
+#: templates/timeline.html.jinja:171
+msgid "timeline.tables.pivot.name"
+msgstr "Pivot table"
+
+#: templates/timeline.html.jinja:172
+msgid "timeline.tables.by_people.name"
+msgstr "By people"
+
+#: templates/timeline.html.jinja:173
+msgid "timeline.tables.comments.name"
+msgstr "Comments"
+
+#: templates/timeline.html.jinja:174
+msgid "timeline.tables.pauses.name"
+msgstr "Pauses"
+
+#: templates/timeline.html.jinja:175
+msgid "timeline.tables.overdues.name"
+msgstr "Overdues"
+
+#: templates/timeline.html.jinja:176
+msgid "timeline.tables.subtasks.name"
+msgstr "Subtasks"
+
+#: templates/timeline.html.jinja:183 templates/timeline.html.jinja:213
+#: templates/timeline.html.jinja:261 templates/timeline.html.jinja:298
+msgid "timeline.tables.general.name"
+msgstr "Name"
+
+#: templates/timeline.html.jinja:184
+msgid "timeline.tables.general.state"
+msgstr "State"
+
+#: templates/timeline.html.jinja:240
+msgid "timeline.tables.comments.author"
+msgstr "Author"
+
+#: templates/timeline.html.jinja:241
+msgid "timeline.tables.comments.date"
+msgstr "Date"
+
+#: templates/timeline.html.jinja:242
+msgid "timeline.tables.comments.comment"
+msgstr "Comment"
+
+#: templates/timeline.html.jinja:257
+msgid "timeline.tables.pauses.help_title"
+msgstr "What the pauses is?"
+
+#: templates/timeline.html.jinja:257
+msgid "timeline.tables.pauses.help_text"
+msgstr ""
+"Pauses are the time while the task is in <strong>On hold</strong>.<br /"
+">Graph <code>Actual time</code> shows the physical time between these "
+"dates. Graph <code>Only the working time</code> selects from "
+"<code>Actual time</code> is from Monday to Friday from 9:00-13:00 and "
+"14:00-18:00, excluding holidays.<br /><strong>Note:</strong> the "
+"difference of one second between the working time and the actual time is "
+"due to the peculiarities of the calculation (rounding to minutes)."
+
+#: templates/timeline.html.jinja:262
+msgid "timeline.tables.pauses.begin"
+msgstr "Begin"
+
+#: templates/timeline.html.jinja:263
+msgid "timeline.tables.pauses.end"
+msgstr "End"
+
+#: templates/timeline.html.jinja:264
+msgid "timeline.tables.pauses.actual_time"
+msgstr "Actual time"
+
+#: templates/timeline.html.jinja:265
+msgid "timeline.tables.pauses.wh_only"
+msgstr "Working hours only"
+
+#: templates/timeline.html.jinja:297 templates/timeline.html.jinja:319
+msgid "timeline.tables.general.counter"
+msgstr "#"
+
+#: templates/timeline.html.jinja:299
+msgid "timeline.tables.general.date"
+msgstr "Date"
+
+#: templates/timeline.html.jinja:314
+msgid "timeline.tables.subtasks.help_title"
+msgstr "How do Subtasks affect Spent Time?"
+
+#: templates/timeline.html.jinja:314
+msgid "timeline.tables.subtasks.help_text"
+msgstr ""
+"YouTrack implicitly adds the <code>Spent Time</code> of each subtask to "
+"the total <code>Spent Time</code>. Because of this, it may seem that the "
+"task has been delayed, but in fact, time has accumulated in another "
+"place altogether. The table below shows each subtask (if any), as well "
+"as its <code>Spent Time</code> and percentage of the total."
+
+#: templates/timeline.html.jinja:321
+msgid "timeline.tables.subtasks.task_name"
+msgstr "Subtask"
+
+#: templates/timeline.html.jinja:463
+msgid "timeline.tables.pivot.total_row_prefix"
+msgstr "Total in"
+
+#: templates/timeline.html.jinja:527
+msgid "timeline.tables.pauses.total_row_prefix"
+msgstr "Total by"
+
+#: templates/timeline.html.jinja:547
+msgid "timeline.tables.overdues.total_row_prefix"
+msgstr "Total by"
+
+#: templates/timeline_empty.html.jinja:19
+msgid "timeline.examples_header"
+msgstr "Correct entries examples:"
