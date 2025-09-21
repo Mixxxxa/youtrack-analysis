@@ -56,14 +56,14 @@ def timeline():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
     arg_parser = argparse.ArgumentParser(description='Collects information about YoutTrack issue and visualize it')
     arg_parser.add_argument('-c', '--config', required=True, type=pathlib.Path, help='Configuration file')
     args = arg_parser.parse_args()
 
     config = YouTrackConfig.from_file(args.config)
     app.config['yt-config'] = config
+
+    logging.basicConfig(level=logging.DEBUG if config.debug else logging.INFO)
 
     if config.debug:
         app.config["TEMPLATES_AUTO_RELOAD"] = True

@@ -121,8 +121,8 @@
 {{ badge(text='В работе', bg_color='var(--bs-success)') }}
 {% endif %}
 {% if yt_errors %}
-{% set _yt_error_text = 'Во время получения данных из YouTrack обнаружены ошибки. Следующие данные могут быть неточными: ' ~ yt_errors|join(', ') ~ '.' %}
-{{ badge(text='Обнаружены ошибки YT API', bg_color='var(--bs-danger)', hover_text=_yt_error_text) }}
+{% set _yt_error_text = 'Во время получения данных из YouTrack обнаружены ошибки. Подробности в таблице \'Ошибки YouTrack API\'.' %}
+{{ badge(text='Обнаружены ошибки YouTrack API', bg_color='var(--bs-danger)', hover_text=_yt_error_text) }}
 {% endif %}
 {% if tags | count %}
 <span style="display:inline-block; border-left: 1px solid #ccc; height: 1.5rem; vertical-align: middle; margin-left: 0.5rem;"></span>
@@ -164,6 +164,9 @@
     {{ table_nav_tab_with_counter(id='pauses', text='Простои', counter_value=pauses.entries|count) }}
     {{ table_nav_tab_with_counter(id='overdues', text='Overdue', counter_value=overdues|count, is_danger= overdues|count > 0) }}
     {{ table_nav_tab_with_counter(id='subtasks', text='Подзадачи', counter_value=subtasks.entries|count) }}
+    {% if yt_errors | count %}
+        {{ table_nav_tab_with_counter(id='yt-errors', text='Ошибки YouTrack API', counter_value=yt_errors|count, is_danger=true) }}
+    {% endif %}
 </ul>
 <div class="tab-content tab-content-custom mb-3" id="myTabContent">
     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
@@ -353,6 +356,35 @@
             </tfoot>
         </table>
     </div>
+    {% if yt_errors | count %}
+    <div class="tab-pane fade" id="yt-errors-tab-pane" role="tabpanel" aria-labelledby="yt-errors-tab" tabindex="0">
+        {% set yt_errors_info %}
+            В списке ниже перечислены проблемы обнаруженные при обработке данных полученных из YouTrack.
+            Если вы видите это сообщение, значит для этой проблемы удалось сделать workaround, ценой возможной неточности данных.<br />
+            В столбце <code>Затронутые данные</code> как раз указаны данные которые могли быть испорчены.
+        {% endset %}
+        {{ bs_info_accordion(id='yt-errors-info', title='Что за ошибки YouTrack?', text=yt_errors_info) }}
+        
+        <table id="yt-errors-table" class="table table-hover table-sm caption-top">
+            <thead>
+                <tr>
+                    <th style="padding-left: var(--table-left-padding);" scope="col">№</th>
+                    <th scope="col">Проблема</th>
+                    <th scope="col">Затронутые данные</th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for entry in yt_errors %}
+                <tr>
+                    <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
+                    <td>{{entry.description}}</td>
+                    <td>{{entry.affected_data|join(', ')}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block additionalscripts %}

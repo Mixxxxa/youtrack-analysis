@@ -2,6 +2,7 @@ from .entities import *
 from .utils import yt_logger, is_empty
 from .utils.exceptions import ParsingError
 from .config import CustomFields
+from .utils.problems import ProblemHolder, ProblemKind
 from math import fabs
 from contextlib import contextmanager
 
@@ -35,8 +36,9 @@ class IssueParser:
         self.__pauses: list[WorkItem] = list()
         self.__assignees: list[ValueChangeEvent] = list()
         self.__subtasks: list[ShortIssueInfo] = list()
-        self.__yt_errors: set[str] = set()
+        self.__yt_errors: ProblemHolder = ProblemHolder()
         self.__overdues: list[Event] = list()
+
 
     @contextmanager
     def __link_parse_guard(self, new_value: bool|None =None):
@@ -52,6 +54,7 @@ class IssueParser:
             yield self.__parser_process_links
         finally:
             self.__parser_process_links = original_value
+
 
     def __pre_parse_activities(self, json) -> None:
         # Проблемы которые не удалось решить парсингом в один проход:
@@ -99,16 +102,17 @@ class IssueParser:
     def __is_on_hold(self, state: str) -> bool:
         return state == IssueState.OnHold
     
+
     def __is_in_work(self, state: str) -> bool:
         return state in [IssueState.InProgress, IssueState.Review]
 
-    def __write_yt_error(self, text: str) -> None:
-        if self.__parser_process_links:
-            yt_logger.debug(f"Ignoring YouTrack API error in link. Possible error with field: '{text}'")
+
+    def __write_yt_error(self, kind: ProblemKind, msg = '') -> None:
+        if self.__parser_process_links and kind == ProblemKind.NullScope:
             return
-        
-        yt_logger.warning(f"Detected YouTrack API error. Possible error with field: '{text}'")
-        self.__yt_errors.add(text)
+        yt_logger.warning(f"Detected YT API error ({kind}). Details: '{msg}'")
+        self.__yt_errors.add(kind, msg)
+
 
     def __parse_short_info(self, issue_info) -> ShortIssueInfo:
         """ Parse info
@@ -137,8 +141,7 @@ class IssueParser:
                     scope = Duration.from_minutes(int(value['minutes']))
                 else:
                     # Scope должен быть, но иногда не отдаётся API
-                    self.__write_yt_error(f'Scope')
-                    self.__write_yt_error(f'Превышение Scope')
+                    self.__write_yt_error(ProblemKind.NullScope, 'API has returned NULL Scope')
             elif field == self.__custom_fields.spent_time and value is not None:
                 spent_time = Duration.from_minutes(int(value['minutes']))
             elif field == self.__custom_fields.component:
@@ -182,6 +185,7 @@ class IssueParser:
             project=project
         )
 
+
     def parse_custom_fields(self, entry) -> None:
         info = self.__parse_short_info(entry)
         self.__id = info.id
@@ -196,6 +200,7 @@ class IssueParser:
         self.__subtasks = info.subtasks
         self.__component = info.component
         self.__project = info.project
+
 
     def __parse_activity(self, entry) -> None:
         timestamp = Timestamp.from_yt(entry['timestamp'])
@@ -240,10 +245,12 @@ class IssueParser:
                                     before=before, 
                                     after=after)
 
+
     def parse_activities(self, json) -> None:
         self.__pre_parse_activities(json)
         for entry in json:
             self.__parse_activity(entry)
+
 
     def __finalize(self) -> None:
         if self.__is_in_pause():
@@ -259,7 +266,7 @@ class IssueParser:
         # Иногда случается из-за того что подзадачу слинковали не сразу, а поэтому 
         # нужно выявлять этот момент и считать только его
         if self.__spent_time_yt != total_spent_time:
-            self.__write_yt_error('Spent Time')
+            self.__write_yt_error(ProblemKind.SpentTimeInconsistency, 'The value in YouTrack field \'Spent Time\' is not equal to calculated Spent Time')
 
         # Логичнее сортировать по ID, но в таком виде оно нигде не используется.
         # Поэтому сортируем по убыванию spent time
@@ -307,6 +314,7 @@ class IssueParser:
             project=self.__project
         )
 
+
     def __add_state(self, timestamp: Timestamp, state: str) -> None:
         assert state is not None and not is_empty(state)
         if self.__parser_current_state is None:
@@ -315,6 +323,7 @@ class IssueParser:
             yt_logger.debug(f"{timestamp} [State] {self.__parser_current_state} -> {state}")
         self.__parser_current_state = state
 
+
     def __switch_state(self, timestamp: Timestamp, before: str, after: str) -> None:
         assert isinstance(timestamp, Timestamp)
         if before == after:
@@ -322,7 +331,20 @@ class IssueParser:
         if len(after) == 0:
             raise RuntimeError(f"Tried to set empty state")
 
-        assert before == self.__parser_current_state, f"Previous state mismatch. '{before}'!= '{self.__parser_current_state}'"
+        if before != self.__parser_current_state:
+            is_duplicate = False
+            if len(self.__work_items) > 2:
+                # TODO Это не сработает если дубликат в начале задачи
+                is_same_before = self.__work_items[-2].state == before
+                is_same_after = self.__work_items[-1].state == after
+                # Timestamp почему-то разный, поэтому не сравниваем
+                is_duplicate = is_same_before and is_same_after
+
+            if is_duplicate:
+                self.__write_yt_error(ProblemKind.DuplicateStateSwitch, 
+                                      f"{timestamp} Duplicate state switch for '{self.__assignees[-1].value}': '{before}'->'{self.__parser_current_state}'")
+            else:
+                raise RuntimeError(f"{timestamp} Previous state mismatch: '{before}'!='{self.__parser_current_state}'")
 
         # Паузы в работе
         if self.__is_on_hold(before):
@@ -338,11 +360,13 @@ class IssueParser:
         if self.__resolve_datetime is not None and after in ['In progress', 'Review', 'On hold', 'Buffer']:
             self.__resolve_datetime = None
         self.__add_state(timestamp=timestamp, state=after)
-    
+
+
     def __add_started(self, timestamp: Timestamp) -> None:
         assert not is_empty(self.__assignees)
         self.__started_datetime = timestamp
         yt_logger.debug(f"{timestamp} [Started] by {self.__assignees[-1].value}")
+
 
     def __add_created(self, timestamp: Timestamp, name: str) -> None:
         assert isinstance(timestamp, Timestamp)
@@ -350,17 +374,20 @@ class IssueParser:
         self.__creation_datetime = timestamp
         yt_logger.debug(f"{timestamp} [Created] by {self.__author}")
 
+
     def __add_overdue(self, timestamp: Timestamp) -> None:
         assert isinstance(timestamp, Timestamp)
         self.__overdues.append(ValueChangeEvent(timestamp=timestamp, 
                                                 value=self.__assignees[-1].value))
         yt_logger.debug(f"{timestamp} [Overdue]")
 
+
     def __add_resolved(self, timestamp: Timestamp, name: str) -> None:
         assert isinstance(timestamp, Timestamp)
         self.__resolve_datetime = timestamp
         yt_logger.debug(f"{timestamp} [Resolved] by {name}")
         
+
     def __add_work_item(self, timestamp: Timestamp, name: str, duration: Duration, state: str) -> None:
         assert isinstance(timestamp, Timestamp)
         temp = WorkItem(name=name,
@@ -370,12 +397,15 @@ class IssueParser:
         self.__work_items.append(temp)
         yt_logger.debug(f"{timestamp} [Time] {temp}")
     
+
     def __is_in_pause(self) -> bool:
         return self.__parser_previous_on_hold_begin is not None
     
+
     def __begin_pause(self, timestamp: Timestamp) -> None:
         self.__parser_previous_on_hold_begin = timestamp
     
+
     def __end_pause(self, timestamp: Timestamp) -> None:
         """Добавление паузы в лог. Паузы меньше одной минуты пропускаются"""
         assert isinstance(timestamp, Timestamp)
@@ -392,6 +422,7 @@ class IssueParser:
             yt_logger.debug(f"{self.__parser_previous_on_hold_begin} [Pause] {temp}")
         self.__parser_previous_on_hold_begin = None
 
+
     def __add_assignee(self, timestamp: Timestamp, name: str):
         if is_empty(self.__assignees):
             yt_logger.debug(f"{timestamp} [Assignee] {name}")
@@ -399,6 +430,7 @@ class IssueParser:
             yt_logger.debug(f"{timestamp} [Assignee] {self.__assignees[-1].value} -> {name}")
         self.__assignees.append(ValueChangeEvent(timestamp=timestamp, 
                                                  value=name))
+
 
     def __switch_assignee(self, timestamp: Timestamp, before: str, after: str):
         if is_empty(before) and is_empty(after):

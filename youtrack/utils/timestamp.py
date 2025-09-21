@@ -40,7 +40,7 @@ class Timestamp:
         return NotImplemented
     
     def __str__(self):
-        timespec = '[%Y-%m-%dT%H:%M]'
+        timespec = '[%Y-%m-%dT%H:%MZ]'
         return self.__internal.strftime(timespec)
     
     def format_ru(self) -> str:

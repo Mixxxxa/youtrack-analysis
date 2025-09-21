@@ -5,7 +5,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as ex
 import plotly.io as pio
-import operator
 from dataclasses import dataclass, field
 from functools import cached_property
 
@@ -49,66 +48,82 @@ def get_pauses_info(data: yt.IssueInfo) -> tuple[yt.Duration, yt.Duration, list[
 
 
 def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
-        overdues = [{'date': i.timestamp.format_ru(), 
-                     'name': i.value} for i in data.overdues]
-        tags = [{'text': i.name, 
-                 'bg_color': i.background_color, 
-                 'fg_color': i.foreground_color} for i in data.tags]
-        comments = [{'creation_datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
-                     'author': i.author, 
-                     'text': i.text} for i in data.comments]
+    overdues = [{'date': i.timestamp.format_ru(), 
+                    'name': i.value} for i in data.overdues]
+    tags = [{'text': i.name, 
+                'bg_color': i.background_color, 
+                'fg_color': i.foreground_color} for i in data.tags]
+    comments = [{'creation_datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
+                    'author': i.author, 
+                    'text': i.text} for i in data.comments]
+    
+    def affected_field_to_str(field: yt.IssueProblem.AffectedField) -> str:
+        if field == yt.IssueProblem.AffectedField.SpentTime:
+            return 'Spent Time'
+        elif field == yt.IssueProblem.AffectedField.ScopeOverrun:
+            return 'Превышение Scope'
+        elif field == yt.IssueProblem.AffectedField.State:
+            return 'State'
+        raise RuntimeError('Unknown affected field')
+    
+    yt_errors = [{
+        'description': entry.msg,
+        'affected_data': list({ affected_field_to_str(field) for field in entry.affected_fields })
+    } for entry in data.yt_errors.get()]
+    
+    pauses_total,pauses_total_business,pauses_by_people = get_pauses_info(data)
 
-        pauses_total,pauses_total_business,pauses_by_people = get_pauses_info(data)
+    subtasks = []
+    subtasks_total_spent_time = yt.Duration()
+    for i in sorted(data.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
+        subtasks_total_spent_time += i.spent_time_yt
+        subtasks.append({
+            'id': i.id,
+            'url': config.get_issue_url(i.id),
+            'title': i.summary,
+            'state': i.state,
+            'spent_time': i.spent_time_yt.format_yt(),
+            'spent_time_order': i.spent_time_yt.to_seconds(),
+            'percents': f'{i.spent_time_yt.to_seconds() / data.spent_time_yt.to_seconds() * 100:.2f}'
+        })
 
-        subtasks = []
-        subtasks_total_spent_time = yt.Duration()
-        for i in sorted(data.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
-            subtasks_total_spent_time += i.spent_time_yt
-            subtasks.append({'id': i.id,
-                             'url': config.get_issue_url(i.id),
-                             'title': i.summary,
-                             'state': i.state,
-                             'spent_time': i.spent_time_yt.format_yt(),
-                             'spent_time_order': i.spent_time_yt.to_seconds(),
-                             'percents': f'{i.spent_time_yt.to_seconds() / data.spent_time_yt.to_seconds() * 100:.2f}'})
+    return {
+        # More
+        'current_assignee': data.assignees[-1].value,
+        'component': data.component,
+        'project_name': data.project.name,
+        'spent_time_real': data.spent_time_real.format_yt(),
+        
+        # Basic
+        'id': data.id,
+        'summary': data.summary,
+        'author': data.author,
+        'state': data.state,
+        'is_resolved': data.is_finished,
+        'scope': data.scope.format_yt() if data.scope else None,
+        'scope_overrun': data.scope_overrun,
+        'creation_datetime': data.creation_datetime.format_ru(),
+        'spent_time': data.spent_time.format_yt(),
+        'started_datetime': data.started_datetime.format_ru() if data.started_datetime else None,
+        'reaction_duration': data.reaction_time.format_yt_natural() if data.is_started else None,
+        'resolve_datetime': data.resolve_datetime.format_ru() if data.resolve_datetime else None,
+        'resolve_duration': data.resolution_time.format_yt_natural() if data.is_finished else None,
 
-        return {
-            # More
-            'current_assignee': data.assignees[-1].value,
-            'component': data.component,
-            'project_name': data.project.name,
-            'spent_time_real': data.spent_time_real.format_yt(),
-            
-            # Basic
-            'id': data.id,
-            'summary': data.summary,
-            'author': data.author,
-            'state': data.state,
-            'is_resolved': data.is_finished,
-            'scope': data.scope.format_yt() if data.scope else None,
-            'scope_overrun': data.scope_overrun,
-            'creation_datetime': data.creation_datetime.format_ru(),
-            'spent_time': data.spent_time.format_yt(),
-            'started_datetime': data.started_datetime.format_ru() if data.started_datetime else None,
-            'reaction_duration': data.reaction_time.format_yt_natural() if data.is_started else None,
-            'resolve_datetime': data.resolve_datetime.format_ru() if data.resolve_datetime else None,
-            'resolve_duration': data.resolution_time.format_yt_natural() if data.is_finished else None,
-
-            # Containers
-            'overdues': overdues,
-            'tags': tags,
-            'comments': comments,
-            'yt_errors': data.yt_errors,
-            'pauses': {
-                'total': pauses_total.format_yt_natural(),
-                'total_business': pauses_total_business.format_yt(),
-                'entries': pauses_by_people
-            },
-            'subtasks': {
-                'total': subtasks_total_spent_time.format_yt(),
-                'entries': subtasks
-            }
+        # Containers
+        'overdues': overdues,
+        'tags': tags,
+        'comments': comments,
+        'yt_errors': yt_errors,
+        'pauses': {
+            'total': pauses_total.format_yt_natural(),
+            'total_business': pauses_total_business.format_yt(),
+            'entries': pauses_by_people
+        },
+        'subtasks': {
+            'total': subtasks_total_spent_time.format_yt(),
+            'entries': subtasks
         }
+    }
 
 
 def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:

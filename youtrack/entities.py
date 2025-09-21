@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from functools import cached_property
 from .utils import Timestamp, Duration, count_working_minutes, is_empty
+from .utils.problems import ProblemHolder
 
 
 UNASSIGNED_NAME = 'Unassigned'
@@ -119,7 +120,7 @@ class IssueInfo(ShortIssueInfo):
     work_items: list[WorkItem]
     assignees: list[ValueChangeEvent]
     pauses: list[WorkItem]
-    yt_errors: list[str]
+    yt_errors: ProblemHolder
     overdues: list[ValueChangeEvent]
 
     @property
