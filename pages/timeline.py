@@ -71,6 +71,11 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
         'description': entry.msg,
         'affected_data': list({ affected_field_to_str(field) for field in entry.affected_fields })
     } for entry in data.yt_errors.get()]
+
+    anomalies = [{
+        'datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
+        'description': str(i)
+    } for i in data.anomalies]
     
     pauses_total,pauses_total_business,pauses_by_people = get_pauses_info(data)
 
@@ -112,6 +117,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
 
         # Containers
         'overdues': overdues,
+        'anomalies': anomalies,
         'tags': tags,
         'comments': comments,
         'yt_errors': yt_errors,

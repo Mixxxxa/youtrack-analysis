@@ -5,6 +5,10 @@ from .config import CustomFields
 from .utils.problems import ProblemHolder, ProblemKind
 from math import fabs
 from contextlib import contextmanager
+from .utils.anomalies import *
+
+
+
 
 
 class IssueParser:
@@ -16,7 +20,7 @@ class IssueParser:
         self.__parser_previous_on_hold_begin: Timestamp | None = None
         self.__parser_current_state: str | None = None
         self.__parser_process_links: bool = False
-        
+
         # Data
         self.__id: str | None = None
         self.__summary: str | None = None
@@ -38,6 +42,7 @@ class IssueParser:
         self.__subtasks: list[ShortIssueInfo] = list()
         self.__yt_errors: ProblemHolder = ProblemHolder()
         self.__overdues: list[Event] = list()
+        self.__anomalies: list[Anomaly] = list()
 
 
     @contextmanager
@@ -201,6 +206,37 @@ class IssueParser:
         self.__component = info.component
         self.__project = info.project
 
+    
+    def on_new_tag_parsed(self, timestamp: Timestamp, current_assignee: str, tag: str) -> None:
+        if tag == 'Overdue':
+            self.__anomalies.append(OverdueAnomaly(timestamp=timestamp, 
+                                                   assignee=current_assignee))
+            
+
+    def on_scope_changed(self, timestamp: Timestamp, before: Duration, after: Duration) -> None:
+        if before < after:
+            self.__anomalies.append(ScopeIncreasedAnomaly(timestamp=timestamp, 
+                                                          before=before, 
+                                                          after=after))
+
+
+    def on_parsing_finished(self) -> None:
+        if self.__scope and self.__spent_time_yt and self.__spent_time_yt > self.__scope:
+            # надо считать по ходу дела (могли менять скоуп и снова его проябывать)
+            #self.__anomalies.append(ScopeOverrunAnomaly(timestamp=time))
+            pass
+
+
+    def on_new_workitem(self, item: WorkItem) -> None:
+        two_business_days = Duration(timedelta(hours=16))
+        if item.state ==  'Review' and item.business_duration > two_business_days:
+            # TODO Нужно ловить ревью с on hold между ними
+            self.__anomalies.append(TooLongReviewAnomaly(timestamp=item.timestamp,
+                                                         assignee=item.name,
+                                                         expected_time=two_business_days,
+                                                         actual_time=item.business_duration))
+        pass
+
 
     def __parse_activity(self, entry) -> None:
         timestamp = Timestamp.from_yt(entry['timestamp'])
@@ -210,9 +246,10 @@ class IssueParser:
             self.__add_resolved(timestamp=timestamp, 
                                 name=entry['author']['name'])
             
-        elif entry_type == 'TagsActivityItem':
-            if not is_empty(entry['added']) and entry['added'][0]['name'] == 'Overdue':
-                self.__add_overdue(timestamp=timestamp)
+        elif entry_type == 'TagsActivityItem' and not is_empty(entry['added']):
+            self.on_new_tag_parsed(timestamp=timestamp, 
+                                   current_assignee=self.__assignees[-1].value,
+                                   tag=entry['added'][0]['name'])
 
         elif entry_type == 'WorkItemActivityItem':
             duration = Duration.from_minutes(int(entry['added'][0]['duration']['minutes']))
@@ -287,10 +324,18 @@ class IssueParser:
         # Сортируем все workitem'ы по времени создания
         # для стабилизации и ускорения дальнейшей обработки
         self.__work_items.sort()
+        self.on_parsing_finished()
 
 
     def get_result(self) -> IssueInfo:
         self.__finalize()
+
+
+        if not is_empty(self.__anomalies):
+            for i in self.__anomalies:
+                yt_logger.warning(str(i))
+
+
         return IssueInfo(
             id=self.__id,
             summary=self.__summary,
@@ -311,7 +356,8 @@ class IssueParser:
             yt_errors=self.__yt_errors,
             overdues=self.__overdues,
             component=self.__component,
-            project=self.__project
+            project=self.__project,
+            anomalies=self.__anomalies
         )
 
 
@@ -396,6 +442,7 @@ class IssueParser:
                         state=state)
         self.__work_items.append(temp)
         yt_logger.debug(f"{timestamp} [Time] {temp}")
+        self.on_new_workitem(temp)
     
 
     def __is_in_pause(self) -> bool:
