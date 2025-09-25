@@ -6,6 +6,7 @@ class ProblemKind(Enum):
     DuplicateStateSwitch = auto()   # дублирующийся переход state
     NullScope = auto()              # null вместо scope, хотя в задаче он есть
     SpentTimeInconsistency = auto() # вычесленный SpentTime != значению в YT
+    NullBeginScope = auto()         # при изменении Scope значение до None
 
 
 @dataclass
@@ -29,6 +30,8 @@ class IssueProblem:
                     IssueProblem.AffectedField.ScopeOverrun]
         elif self.kind == ProblemKind.SpentTimeInconsistency:
             return [IssueProblem.AffectedField.SpentTime]
+        elif self.kind == ProblemKind.NullBeginScope:
+            return []
         raise NotImplementedError("Unknown YT problem kind")
     
     @property

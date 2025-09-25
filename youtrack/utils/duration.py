@@ -118,5 +118,7 @@ class Duration:
     
 
     def to_seconds(self) -> int:
+        """Количество секунд"""
         return int(self.__internal.total_seconds())
+    
     

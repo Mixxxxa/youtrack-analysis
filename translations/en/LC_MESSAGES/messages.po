@@ -7,58 +7,59 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-21 06:21+0300\n"
-"PO-Revision-Date: 2025-09-21 06:20+0300\n"
+"POT-Creation-Date: 2025-09-29 00:21+0300\n"
+"PO-Revision-Date: 2025-09-29 01:24+0300\n"
 "Last-Translator: Mikhail Gelvikh\n"
-"Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.6\n"
 
-#: main.py:102
+#: main.py:106
 msgid "base.service_wip"
 msgstr ""
-"The service is running in test mode. In case of errors or incorrect data,"
-" please contact %(support_person)s for assistance."
+"The service is running in test mode. In case of errors or incorrect "
+"data, please contact %(support_person)s for assistance."
 
-#: main.py:111
+#: main.py:115
 msgid "base.issue_not_found_with_id"
 msgstr "The issue '%(issue_id)s' was not found"
 
-#: main.py:120
+#: main.py:124
 msgid "base.invalid_issue_id_or_url"
 msgstr "Invalid issue ID or URL: '%(issue_id)s'"
 
-#: main.py:129
+#: main.py:133
 msgid "base.unable_to_get_info_with_id_and_person"
 msgstr ""
-"Unable to retrieve information for issue '%(issue_id)s'. Please contact "
-"%(support_person)s to resolve the problem."
+"Unable to retrieve information for issue '%(issue_id)s'. Please contact %"
+"(support_person)s to resolve the problem."
 
-#: pages/timeline.py:218
+#: pages/timeline.py:222
 msgid "timeline.chart.legend.other"
 msgstr "Other"
 
-#: pages/timeline.py:219
+#: pages/timeline.py:223
 msgid "timeline.chart.legend.assignee"
 msgstr "Assignee"
 
-#: pages/timeline.py:227
+#: pages/timeline.py:231
 msgid "timeline.chart.legend.comments"
 msgstr "Comments"
 
-#: pages/timeline.py:260
+#: pages/timeline.py:267
 msgid "timeline.chart.legend.started_datetime"
 msgstr "Taken into work"
 
-#: pages/timeline.py:270
+#: pages/timeline.py:277
 msgid "timeline.chart.legend.created_datetime"
 msgstr "Created"
 
-#: pages/timeline.py:280
+#: pages/timeline.py:287
 msgid "timeline.chart.legend.resolved_datetime"
 msgstr "Resolved"
 
@@ -128,7 +129,7 @@ msgstr "YouTrack API error detected"
 msgid "issue.author"
 msgstr "Author"
 
-#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:325
+#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:328
 msgid "issue.state"
 msgstr "State"
 
@@ -227,8 +228,8 @@ msgid "timeline.tables.pauses.name"
 msgstr "On-Hold Periods"
 
 #: templates/timeline.html.jinja:175
-msgid "timeline.tables.overdues.name"
-msgstr "Overdues"
+msgid "timeline.tables.anomalies.name"
+msgstr "Anomalies"
 
 #: templates/timeline.html.jinja:176
 msgid "timeline.tables.subtasks.name"
@@ -239,7 +240,7 @@ msgid "timeline.tables.yt_errors.name"
 msgstr "YouTrack API errors"
 
 #: templates/timeline.html.jinja:186 templates/timeline.html.jinja:216
-#: templates/timeline.html.jinja:264 templates/timeline.html.jinja:301
+#: templates/timeline.html.jinja:264
 msgid "timeline.tables.general.name"
 msgstr "Name"
 
@@ -266,13 +267,13 @@ msgstr "What are on-hold periods?"
 #: templates/timeline.html.jinja:260
 msgid "timeline.tables.pauses.help_text"
 msgstr ""
-"On-hold periods represent the time during which the task is put on "
-"hold.<br />The <code>Actual time</code> graph shows the total elapsed "
-"time between these dates. The <code>Working hours only</code> graph "
-"displays the time within standard working hours (Monday to Friday, "
-"9:00–13:00 and 14:00–18:00), excluding holidays.<br "
-"/><strong>Note:</strong> a one-second difference between the working time"
-" and the actual time may occur due to rounding to minutes."
+"On-hold periods represent the time during which the task is put on hold."
+"<br />The <code>Actual time</code> graph shows the total elapsed time "
+"between these dates. The <code>Working hours only</code> graph displays "
+"the time within standard working hours (Monday to Friday, 9:00–13:00 and "
+"14:00–18:00), excluding holidays.<br /><strong>Note:</strong> a one-"
+"second difference between the working time and the actual time may occur "
+"due to rounding to minutes."
 
 #: templates/timeline.html.jinja:265
 msgid "timeline.tables.pauses.begin"
@@ -290,8 +291,24 @@ msgstr "Actual Time"
 msgid "timeline.tables.pauses.wh_only"
 msgstr "Working Hours Only"
 
-#: templates/timeline.html.jinja:300 templates/timeline.html.jinja:322
-#: templates/timeline.html.jinja:360
+#: templates/timeline.html.jinja:297
+msgid "timeline.tables.anomalies.help_title"
+msgstr "What is an anomaly and which of them are detected?"
+
+#: templates/timeline.html.jinja:297
+msgid "timeline.tables.anomalies.help_text"
+msgstr ""
+"Anomalies are a mechanism for finding typical problems in tasks. At the "
+"moment, the following problems may be detected in the tasks:<br />\n"
+"<ol>\n"
+"<li>Deadline violations</li>\n"
+"<li>Too long review by one person (more than two business days)</li>\n"
+"<li>Exceeding the Scope of the task</li>\n"
+"<li>Increasing the Scope of the task</li>\n"
+"</ol>"
+
+#: templates/timeline.html.jinja:301 templates/timeline.html.jinja:325
+#: templates/timeline.html.jinja:363
 msgid "timeline.tables.general.counter"
 msgstr "#"
 
@@ -299,11 +316,19 @@ msgstr "#"
 msgid "timeline.tables.general.date"
 msgstr "Date"
 
-#: templates/timeline.html.jinja:317
+#: templates/timeline.html.jinja:303
+msgid "timeline.tables.anomalies.responsible"
+msgstr "Responsible"
+
+#: templates/timeline.html.jinja:304
+msgid "timeline.tables.anomalies.details"
+msgstr "Anomaly details"
+
+#: templates/timeline.html.jinja:320
 msgid "timeline.tables.subtasks.help_title"
 msgstr "How do subtasks affect Spent Time?"
 
-#: templates/timeline.html.jinja:317
+#: templates/timeline.html.jinja:320
 msgid "timeline.tables.subtasks.help_text"
 msgstr ""
 "YouTrack automatically adds the <code>Spent Time</code> of each subtask "
@@ -312,15 +337,15 @@ msgstr ""
 "table below displays each subtask (if any), along with its <code>Spent "
 "Time</code> and its percentage of the total."
 
-#: templates/timeline.html.jinja:324
+#: templates/timeline.html.jinja:327
 msgid "timeline.tables.subtasks.task_name"
 msgstr "Subtask"
 
-#: templates/timeline.html.jinja:356
+#: templates/timeline.html.jinja:359
 msgid "timeline.tables.yt_errors.help_title"
 msgstr "What is YouTrack API error?"
 
-#: templates/timeline.html.jinja:356
+#: templates/timeline.html.jinja:359
 msgid "timeline.tables.yt_errors.help_text"
 msgstr ""
 "The list below outlines the issues that were detected while processing "
@@ -329,27 +354,56 @@ msgstr ""
 "inaccuracies in the data.<br />The <code>Affected data</code> column "
 "indicates the data that may have been affected by the issue."
 
-#: templates/timeline.html.jinja:361
+#: templates/timeline.html.jinja:364
 msgid "timeline.tables.yt_errors.details"
 msgstr "Details"
 
-#: templates/timeline.html.jinja:362
+#: templates/timeline.html.jinja:365
 msgid "timeline.tables.yt_errors.affected_data"
 msgstr "Affected Data"
 
-#: templates/timeline.html.jinja:489
+#: templates/timeline.html.jinja:492
 msgid "timeline.tables.pivot.total_row_prefix"
 msgstr "Total for"
 
-#: templates/timeline.html.jinja:553
+#: templates/timeline.html.jinja:556
 msgid "timeline.tables.pauses.total_row_prefix"
 msgstr "Total for"
 
-#: templates/timeline.html.jinja:573
-msgid "timeline.tables.overdues.total_row_prefix"
+#: templates/timeline.html.jinja:576
+msgid "timeline.tables.anomalies.total_row_prefix"
 msgstr "Total for"
 
 #: templates/timeline_empty.html.jinja:19
 msgid "timeline.examples_header"
 msgstr "Examples of correct entries:"
 
+#: youtrack/utils/anomalies.py:16
+msgid "anomaly.overdue"
+msgstr "Deadline violation (Overdue)"
+
+#: youtrack/utils/anomalies.py:27
+msgid "anomaly.fragmented_too_long_review"
+msgstr ""
+"Violation of established review timeframe with on-hold periods (%"
+"(actual_time)s instead of %(expected_time)s)"
+
+#: youtrack/utils/anomalies.py:30
+msgid "anomaly.too_long_review"
+msgstr ""
+"Violation of established review timeframe (%(actual_time)s instead of %"
+"(expected_time)s)"
+
+#: youtrack/utils/anomalies.py:41
+msgid "anomaly.scope_overrun"
+msgstr "Scope of the task exceeded (%(spent_time)s instead of %(scope)s)"
+
+#: youtrack/utils/anomalies.py:52
+msgid "anomaly.scope_increased"
+msgstr "The scope of the task has been increased (%(before)s -> %(after)s)"
+
+#~ msgid "timeline.tables.overdues.name"
+#~ msgstr "Overdues"
+
+#~ msgid "timeline.tables.overdues.total_row_prefix"
+#~ msgstr "Total for"

@@ -1,8 +1,22 @@
 from dataclasses import dataclass
-from .entities import CustomField
-from .utils import str_to_bool, is_empty
+from .utils.others import str_to_bool, is_empty
 from pathlib import Path
 import json
+
+
+@dataclass
+class CustomField:
+    id: str
+    name: str
+
+    def __eq__(self, other):
+        """Compare without ID
+        
+        TODO Подумать, нужен ли вообще ID
+        """
+        if isinstance(other, CustomField):
+            return self.name == other.name
+        return NotImplemented
 
 
 @dataclass

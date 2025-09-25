@@ -1,41 +1,18 @@
 from datetime import timedelta
 from dataclasses import dataclass
-from enum import StrEnum
 from functools import cached_property
 from .utils import Timestamp, Duration, count_working_minutes, is_empty
 from .utils.problems import ProblemHolder
+from .utils.issue_state import IssueState
 
 
 UNASSIGNED_NAME = 'Unassigned'
-
-
-class IssueState(StrEnum):
-    Buffer = 'Buffer'
-    OnHold = 'On hold'
-    InProgress = 'In progress'
-    Review = 'Review'
-    Resolved = 'Resolved'
 
 
 @dataclass
 class Project:
     short_name: str
     name: str
-
-
-@dataclass
-class CustomField:
-    id: str
-    name: str
-
-    def __eq__(self, other):
-        """Compare without ID
-        
-        TODO Подумать, нужен ли вообще ID
-        """
-        if isinstance(other, CustomField):
-            return self.name == other.name
-        return NotImplemented
 
 
 @dataclass
@@ -72,7 +49,7 @@ class ValueChangeEvent(Event):
 class WorkItem(Event):
     name: str
     duration: Duration
-    state: str
+    state: IssueState
 
     def begin(self) -> Timestamp:
         """Возвращает Timestamp начала работы
@@ -105,7 +82,7 @@ class ShortIssueInfo:
     scope: Duration | None
     spent_time_yt: Duration
     current_assignee: str
-    state: str
+    state: IssueState
     component: str
     tags: list[Tag]
     subtasks: list['ShortIssueInfo']
@@ -121,7 +98,6 @@ class IssueInfo(ShortIssueInfo):
     assignees: list[ValueChangeEvent]
     pauses: list[WorkItem]
     yt_errors: ProblemHolder
-    overdues: list[ValueChangeEvent]
 
     @property
     def resolution_time(self) -> Duration | None:

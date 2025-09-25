@@ -172,7 +172,7 @@
     {{ table_nav_tab(id='by-people', text=_('timeline.tables.by_people.name')) }}
     {{ table_nav_tab_with_counter(id='comments', text=_('timeline.tables.comments.name'), counter_value=comments|count) }}
     {{ table_nav_tab_with_counter(id='pauses', text=_('timeline.tables.pauses.name'), counter_value=pauses.entries|count) }}
-    {{ table_nav_tab_with_counter(id='overdues', text=_('timeline.tables.overdues.name'), counter_value=overdues|count, is_danger= overdues|count > 0) }}
+    {{ table_nav_tab_with_counter(id='anomalies', text=_('timeline.tables.anomalies.name'), counter_value=anomalies|count, is_danger= anomalies|count > 0) }}
     {{ table_nav_tab_with_counter(id='subtasks', text=_('timeline.tables.subtasks.name'), counter_value=subtasks.entries|count) }}
     {% if yt_errors | count %}
         {{ table_nav_tab_with_counter(id='yt-errors', text=_('timeline.tables.yt_errors.name'), counter_value=yt_errors|count, is_danger=true) }}
@@ -293,21 +293,24 @@
             </tfoot>
         </table>
     </div>
-    <div class="tab-pane fade" id="overdues-tab-pane" role="tabpanel" aria-labelledby="overdues-tab" tabindex="0">
-        <table id="overdues-table" class="table table-hover table-sm caption-top">
+    <div class="tab-pane fade" id="anomalies-tab-pane" role="tabpanel" aria-labelledby="anomalies-tab" tabindex="0">
+        {{ bs_info_accordion(id='anomalies-info', title=_('timeline.tables.anomalies.help_title'), text=_('timeline.tables.anomalies.help_text')) }}
+        <table id="anomalies-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.counter') }}</th>
-                    <th scope="col">{{ _('timeline.tables.general.name') }}</th>
                     <th scope="col">{{ _('timeline.tables.general.date') }}</th>
+                    <th scope="col">{{ _('timeline.tables.anomalies.responsible') }}</th>
+                    <th scope="col">{{ _('timeline.tables.anomalies.details') }}</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
-                {% for item in overdues %}
+                {% for item in anomalies %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
-                    <td>{{item.name}}</td>
-                    <td>{{item.date}}</td>
+                    <td>{{item.datetime}}</td>
+                    <td>{{item.responsible}}</td>
+                    <td>{{item.description}}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -513,7 +516,24 @@
             columnDefs: [
                 {
                     targets: 1,
-                    render: DataTable.render.datetime('D.MM.YYYY HH:mm')
+                    render: DataTable.render.datetime('D.MM.YYYY HH:mm'),
+                    className: 'dt-head-left dt-body-left'
+                }
+            ]
+        });
+    } );
+    $(document).ready( function () {
+        $('#anomalies-table').DataTable({
+            fixedHeader: true,
+            paging: false,
+            searching: false,
+            order: [],
+            info: false,
+            columnDefs: [
+                {
+                    targets: 1,
+                    render: DataTable.render.datetime('D.MM.YYYY HH:mm'),
+                    className: 'dt-head-left dt-body-left'
                 }
             ]
         });
@@ -557,23 +577,6 @@
                     return tr;
                 },
             },
-        });
-    } );
-    $(document).ready( function () {
-        $('#overdues-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            info: false,
-            rowGroup: {
-                dataSrc: 1,
-                startRender: function (rows, group) {
-                    let tr = document.createElement('tr');
-                    addCell(tr, "{{ _('timeline.tables.overdues.total_row_prefix') }} " + group + ': ' + rows.data().length, 3);
-                    return tr;
-                }
-            }
         });
     } );
     $(document).ready( function () {

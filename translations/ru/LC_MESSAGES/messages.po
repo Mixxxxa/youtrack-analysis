@@ -7,59 +7,60 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-21 06:21+0300\n"
-"PO-Revision-Date: 2025-09-21 06:21+0300\n"
+"POT-Creation-Date: 2025-09-29 00:21+0300\n"
+"PO-Revision-Date: 2025-09-29 01:23+0300\n"
 "Last-Translator: Mikhail Gelvikh\n"
-"Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.6\n"
 
-#: main.py:102
+#: main.py:106
 msgid "base.service_wip"
 msgstr ""
-"Сервис работает в тестовом режиме. В случае обнаружения проблем "
-"обратитесь к %(support_person)s."
+"Сервис работает в тестовом режиме. В случае обнаружения проблем обратитесь к %"
+"(support_person)s."
 
-#: main.py:111
+#: main.py:115
 msgid "base.issue_not_found_with_id"
 msgstr "Задача с ID '%(issue_id)s' не найдена"
 
-#: main.py:120
+#: main.py:124
 msgid "base.invalid_issue_id_or_url"
 msgstr "Неправильный ID или URL задачи: '%(issue_id)s'"
 
-#: main.py:129
+#: main.py:133
 msgid "base.unable_to_get_info_with_id_and_person"
 msgstr ""
-"Не удалось получить информацию по задаче '%(issue_id)s'. Обратитесь к "
-"%(support_person)s для устранения проблемы."
+"Не удалось получить информацию по задаче '%(issue_id)s'. Обратитесь к %"
+"(support_person)s для устранения проблемы."
 
-#: pages/timeline.py:218
+#: pages/timeline.py:222
 msgid "timeline.chart.legend.other"
 msgstr "Другое"
 
-#: pages/timeline.py:219
+#: pages/timeline.py:223
 msgid "timeline.chart.legend.assignee"
 msgstr "Assignee"
 
-#: pages/timeline.py:227
+#: pages/timeline.py:231
 msgid "timeline.chart.legend.comments"
 msgstr "Комментарии"
 
-#: pages/timeline.py:260
+#: pages/timeline.py:267
 msgid "timeline.chart.legend.started_datetime"
 msgstr "Начало работы"
 
-#: pages/timeline.py:270
+#: pages/timeline.py:277
 msgid "timeline.chart.legend.created_datetime"
 msgstr "Создание задачи"
 
-#: pages/timeline.py:280
+#: pages/timeline.py:287
 msgid "timeline.chart.legend.resolved_datetime"
 msgstr "Решение задачи"
 
@@ -118,8 +119,8 @@ msgstr "В работе"
 #: templates/timeline.html.jinja:131
 msgid "timeline.issue.tags.api_error_hover"
 msgstr ""
-"Во время получения данных из YouTrack обнаружены ошибки. Подробнее в "
-"таблице 'Ошибки YouTrack API'."
+"Во время получения данных из YouTrack обнаружены ошибки. Подробнее в таблице "
+"'Ошибки YouTrack API'."
 
 #: templates/timeline.html.jinja:132
 msgid "timeline.issue.tags.api_error"
@@ -129,7 +130,7 @@ msgstr "Обнаружены ошибки YouTrack API"
 msgid "issue.author"
 msgstr "Автор"
 
-#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:325
+#: templates/timeline.html.jinja:150 templates/timeline.html.jinja:328
 msgid "issue.state"
 msgstr "Состояние"
 
@@ -160,8 +161,8 @@ msgstr "Время реакции"
 #: templates/timeline.html.jinja:158
 msgid "issue.reaction_duration.help_text"
 msgstr ""
-"Время от создания задачи до взятия в работу (первого перехода в In "
-"Progress или Review)"
+"Время от создания задачи до взятия в работу (первого перехода в In Progress "
+"или Review)"
 
 #: templates/timeline.html.jinja:159
 msgid "issue.resolve_datetime"
@@ -206,8 +207,8 @@ msgstr "Spent Time (от подзадач)"
 #: templates/timeline.html.jinja:167
 msgid "issue.spent_time_subtasks.help_text"
 msgstr ""
-"Показывает сколько времени в текущей задаче получено от подзадач. "
-"Подробнее во вкладке 'Подзадачи'"
+"Показывает сколько времени в текущей задаче получено от подзадач. Подробнее "
+"во вкладке 'Подзадачи'"
 
 #: templates/timeline.html.jinja:171
 msgid "timeline.tables.pivot.name"
@@ -226,8 +227,8 @@ msgid "timeline.tables.pauses.name"
 msgstr "Простои"
 
 #: templates/timeline.html.jinja:175
-msgid "timeline.tables.overdues.name"
-msgstr "Overdue"
+msgid "timeline.tables.anomalies.name"
+msgstr "Аномалии"
 
 #: templates/timeline.html.jinja:176
 msgid "timeline.tables.subtasks.name"
@@ -238,7 +239,7 @@ msgid "timeline.tables.yt_errors.name"
 msgstr "Ошибки YouTrack API"
 
 #: templates/timeline.html.jinja:186 templates/timeline.html.jinja:216
-#: templates/timeline.html.jinja:264 templates/timeline.html.jinja:301
+#: templates/timeline.html.jinja:264
 msgid "timeline.tables.general.name"
 msgstr "Имя"
 
@@ -265,14 +266,13 @@ msgstr "Что такое простои (паузы)?"
 #: templates/timeline.html.jinja:260
 msgid "timeline.tables.pauses.help_text"
 msgstr ""
-"Паузы в работе — это то время, пока задача находится в <strong>On "
-"hold</strong>.<br />Графа <code>Фактическое время</code> показывает "
-"физическое время между этими датами. Графа <code>Только рабочее "
-"время</code> выбирает из <code>Фактическое время</code> промежутки с "
-"понедельника по пятницу с 9:00-13:00 и 14:00-18:00 без учета праздничных "
-"дней.<br /><strong>Примечание</strong>: разница в одну секунду между "
-"рабочим и фактическим временем связана с особенностями подсчета "
-"(округлением до минут)."
+"Паузы в работе — это то время, пока задача находится в <strong>On hold</"
+"strong>.<br />Графа <code>Фактическое время</code> показывает физическое "
+"время между этими датами. Графа <code>Только рабочее время</code> выбирает из "
+"<code>Фактическое время</code> промежутки с понедельника по пятницу с "
+"9:00-13:00 и 14:00-18:00 без учета праздничных дней.<br /><strong>Примечание</"
+"strong>: разница в одну секунду между рабочим и фактическим временем связана "
+"с особенностями подсчета (округлением до минут)."
 
 #: templates/timeline.html.jinja:265
 msgid "timeline.tables.pauses.begin"
@@ -290,8 +290,24 @@ msgstr "Фактическое время"
 msgid "timeline.tables.pauses.wh_only"
 msgstr "Только рабочее время"
 
-#: templates/timeline.html.jinja:300 templates/timeline.html.jinja:322
-#: templates/timeline.html.jinja:360
+#: templates/timeline.html.jinja:297
+msgid "timeline.tables.anomalies.help_title"
+msgstr "Что такое аномалии и какие ловятся?"
+
+#: templates/timeline.html.jinja:297
+msgid "timeline.tables.anomalies.help_text"
+msgstr ""
+"Аномалии — это механизм поиска типовых проблем в задачах. На данный момент "
+"поддерживается поиск следующих проблем:<br />\n"
+"<ol>\n"
+"<li>Overdue</li>\n"
+"<li>Слишком долгое ревью одним человеком (больше двух рабочих дней)</li>\n"
+"<li>Превышение Scope задачи</li>\n"
+"<li>Увеличение Scope задачи</li>\n"
+"</ol>"
+
+#: templates/timeline.html.jinja:301 templates/timeline.html.jinja:325
+#: templates/timeline.html.jinja:363
 msgid "timeline.tables.general.counter"
 msgstr "№"
 
@@ -299,57 +315,94 @@ msgstr "№"
 msgid "timeline.tables.general.date"
 msgstr "Дата"
 
-#: templates/timeline.html.jinja:317
+#: templates/timeline.html.jinja:303
+msgid "timeline.tables.anomalies.responsible"
+msgstr "Ответственный"
+
+#: templates/timeline.html.jinja:304
+msgid "timeline.tables.anomalies.details"
+msgstr "Описание аномалии"
+
+#: templates/timeline.html.jinja:320
 msgid "timeline.tables.subtasks.help_title"
 msgstr "Как подзадачи влияют на Spent Time?"
 
-#: templates/timeline.html.jinja:317
+#: templates/timeline.html.jinja:320
 msgid "timeline.tables.subtasks.help_text"
 msgstr ""
-"YouTrack неявно добавляет <code>Spent Time</code> каждой подзадачи в "
-"общий <code>Spent Time</code>.  Из-за этого, может показаться что задача "
-"затянулась, а по факту, время накапало вообще в другом месте. Таблица "
-"ниже показывает каждую подзадачу (если есть), а также её <code>Spent "
-"Time</code> и процент от общего."
+"YouTrack неявно добавляет <code>Spent Time</code> каждой подзадачи в общий "
+"<code>Spent Time</code>.  Из-за этого, может показаться что задача "
+"затянулась, а по факту, время накапало вообще в другом месте. Таблица ниже "
+"показывает каждую подзадачу (если есть), а также её <code>Spent Time</code> и "
+"процент от общего."
 
-#: templates/timeline.html.jinja:324
+#: templates/timeline.html.jinja:327
 msgid "timeline.tables.subtasks.task_name"
 msgstr "Задача"
 
-#: templates/timeline.html.jinja:356
+#: templates/timeline.html.jinja:359
 msgid "timeline.tables.yt_errors.help_title"
 msgstr "Что за ошибки YouTrack?"
 
-#: templates/timeline.html.jinja:356
+#: templates/timeline.html.jinja:359
 msgid "timeline.tables.yt_errors.help_text"
 msgstr ""
 "В списке ниже перечислены проблемы обнаруженные при обработке данных "
 "полученных из YouTrack. Если вы видите это сообщение, значит для этой "
-"проблемы удалось сделать workaround, ценой возможной неточности "
-"данных.<br />В столбце <code>Затронутые данные</code> как раз указаны "
-"данные которые могли быть испорчены."
+"проблемы удалось сделать workaround, ценой возможной неточности данных.<br /"
+">В столбце <code>Затронутые данные</code> как раз указаны данные которые "
+"могли быть испорчены."
 
-#: templates/timeline.html.jinja:361
+#: templates/timeline.html.jinja:364
 msgid "timeline.tables.yt_errors.details"
 msgstr "Описание проблемы"
 
-#: templates/timeline.html.jinja:362
+#: templates/timeline.html.jinja:365
 msgid "timeline.tables.yt_errors.affected_data"
 msgstr "Затронутые данные"
 
-#: templates/timeline.html.jinja:489
+#: templates/timeline.html.jinja:492
 msgid "timeline.tables.pivot.total_row_prefix"
 msgstr "Всего в"
 
-#: templates/timeline.html.jinja:553
+#: templates/timeline.html.jinja:556
 msgid "timeline.tables.pauses.total_row_prefix"
 msgstr "Всего у"
 
-#: templates/timeline.html.jinja:573
-msgid "timeline.tables.overdues.total_row_prefix"
+#: templates/timeline.html.jinja:576
+msgid "timeline.tables.anomalies.total_row_prefix"
 msgstr "Всего у"
 
 #: templates/timeline_empty.html.jinja:19
 msgid "timeline.examples_header"
 msgstr "Примеры корректного ввода:"
 
+#: youtrack/utils/anomalies.py:16
+msgid "anomaly.overdue"
+msgstr "Нарушение сроков исполнения (Overdue)"
+
+#: youtrack/utils/anomalies.py:27
+msgid "anomaly.fragmented_too_long_review"
+msgstr ""
+"Нарушение установленных сроков ревью с перерывами (%(actual_time)s вместо %"
+"(expected_time)s)"
+
+#: youtrack/utils/anomalies.py:30
+msgid "anomaly.too_long_review"
+msgstr ""
+"Нарушение установленных сроков ревью (%(actual_time)s вместо %"
+"(expected_time)s)"
+
+#: youtrack/utils/anomalies.py:41
+msgid "anomaly.scope_overrun"
+msgstr "Превышение Scope задачи (%(spent_time)s вместо %(scope)s)"
+
+#: youtrack/utils/anomalies.py:52
+msgid "anomaly.scope_increased"
+msgstr "Scope задачи был увеличен (%(before)s -> %(after)s)"
+
+#~ msgid "timeline.tables.overdues.name"
+#~ msgstr "Overdue"
+
+#~ msgid "timeline.tables.overdues.total_row_prefix"
+#~ msgstr "Всего у"

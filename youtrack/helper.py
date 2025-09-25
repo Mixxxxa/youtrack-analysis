@@ -5,6 +5,7 @@ from .entities import IssueInfo
 from .utils import yt_logger, is_valid_issue_id, extract_issue_id_from_url
 from .utils.exceptions import InvalidIssueIdError
 from .parser import IssueParser
+from .utils.anomalies import AnomaliesDetector
 
 
 class ApiHelper:
@@ -32,7 +33,7 @@ class ApiHelper:
         # Try as URL
         return extract_issue_id_from_url(text, self.__config.host)
 
-    def get_summary(self, id: str) -> IssueInfo:
+    def get_summary(self, id: str, anomaly_detector: AnomaliesDetector) -> IssueInfo:
         if (issue_id := self.extract_issue_id(id)) is None:
             raise InvalidIssueIdError(id=id)
         
@@ -79,6 +80,14 @@ class ApiHelper:
         assert custom_fields_url.count('links(') == 1, 'Found recursion in custom fields request'
 
         parser = IssueParser(self.__config.custom_fields)
+        parser.cb_pause_added += anomaly_detector.on_pause_added
+        parser.cb_tag_added += anomaly_detector.on_tag_added
+        parser.cb_work_added += anomaly_detector.on_work_added
+        parser.cb_assignee_changed += anomaly_detector.on_assignee_changed
+        parser.cb_scope_changed += anomaly_detector.on_scope_changed
+        parser.cb_state_changed += anomaly_detector.on_state_changed
+        parser.cb_parsing_finished += anomaly_detector.on_parsing_finished
+
         parser.parse_custom_fields(self.__request(url=custom_fields_url))
         parser.parse_activities(self.__request(url=activities_url))
         return parser.get_result()
