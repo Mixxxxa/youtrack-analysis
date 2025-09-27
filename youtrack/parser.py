@@ -6,9 +6,7 @@ from .utils.problems import ProblemHolder, ProblemKind
 from math import fabs
 from contextlib import contextmanager
 from .utils.anomalies import *
-
-
-
+from .utils.issue_state import IssueState
 
 
 class IssueParser:
@@ -18,15 +16,17 @@ class IssueParser:
         
         # Parser state
         self.__parser_previous_on_hold_begin: Timestamp | None = None
-        self.__parser_current_state: str | None = None
+        self.__parser_current_state: IssueState | None = None
         self.__parser_process_links: bool = False
+        # Anomaly counters
+        self.__counter_current_user_review: Duration | None = None
 
         # Data
         self.__id: str | None = None
         self.__summary: str | None = None
         self.__current_assignee: str | None = None
         self.__author: str | None = None
-        self.__state: str | None = None
+        self.__state: IssueState | None = None
         self.__component: str | None = None
         self.__scope: Duration | None = None
         self.__project: Project | None = None
@@ -41,7 +41,6 @@ class IssueParser:
         self.__assignees: list[ValueChangeEvent] = list()
         self.__subtasks: list[ShortIssueInfo] = list()
         self.__yt_errors: ProblemHolder = ProblemHolder()
-        self.__overdues: list[Event] = list()
         self.__anomalies: list[Anomaly] = list()
 
 
@@ -80,7 +79,7 @@ class IssueParser:
                 before: str = UNASSIGNED_NAME if is_empty(entry['removed']) else entry['removed'][0]['name']
                 self.__add_assignee(timestamp=self.__creation_datetime, name=before)
             elif self.__parser_current_state is None and target_member == '__CUSTOM_FIELD__State_2':
-                before = entry['removed'][0]['name']
+                before = IssueState.parse(entry['removed'][0]['name'])
                 self.__add_state(timestamp=self.__creation_datetime, state=before)
             
             if not is_empty(self.__assignees) and self.__parser_current_state is not None:
@@ -97,20 +96,12 @@ class IssueParser:
         # Если начали сразу с On Hold, то начинаем паузу
         # Может показаться логичнее записывать паузы только после начала работы над задачей (перехода в in progress),
         # но тогда потеряются куча задач, которые сразу создают в on hold и больше они никуда не двигаются
-        if self.__is_on_hold(self.__parser_current_state):
+        if self.__parser_current_state.is_hold():
             self.__begin_pause(self.__creation_datetime)
         # Если начали с активного state, то ставим отметку о начале работы
-        if self.__is_in_work(self.__parser_current_state):
+        if self.__parser_current_state.is_in_work():
             self.__add_started(timestamp=self.__creation_datetime)
         
-
-    def __is_on_hold(self, state: str) -> bool:
-        return state == IssueState.OnHold
-    
-
-    def __is_in_work(self, state: str) -> bool:
-        return state in [IssueState.InProgress, IssueState.Review]
-
 
     def __write_yt_error(self, kind: ProblemKind, msg = '') -> None:
         if self.__parser_process_links and kind == ProblemKind.NullScope:
@@ -129,7 +120,7 @@ class IssueParser:
         comments: list[Comment] = list()
         subtasks: list['ShortIssueInfo'] = list()
         current_assignee: str = UNASSIGNED_NAME
-        state: str | None = None
+        state: IssueState | None = None
         component: str | None = None
         project: Project | None = None
         
@@ -138,7 +129,7 @@ class IssueParser:
             field = CustomField(id=i['id'], name=name)
             
             if field == self.__custom_fields.state:
-                state = value['name']
+                state = IssueState.parse(value['name'])
             elif field == self.__custom_fields.assignee and value is not None:
                 current_assignee = value['fullName']
             elif field == self.__custom_fields.scope:
@@ -210,12 +201,13 @@ class IssueParser:
     def on_new_tag_parsed(self, timestamp: Timestamp, current_assignee: str, tag: str) -> None:
         if tag == 'Overdue':
             self.__anomalies.append(OverdueAnomaly(timestamp=timestamp, 
-                                                   assignee=current_assignee))
+                                                   responsible=current_assignee))
             
 
-    def on_scope_changed(self, timestamp: Timestamp, before: Duration, after: Duration) -> None:
+    def on_scope_changed(self, timestamp: Timestamp, before: Duration, after: Duration, author: str) -> None:
         if before < after:
             self.__anomalies.append(ScopeIncreasedAnomaly(timestamp=timestamp, 
+                                                          responsible=author,
                                                           before=before, 
                                                           after=after))
 
@@ -232,7 +224,8 @@ class IssueParser:
         if item.state ==  'Review' and item.business_duration > two_business_days:
             # TODO Нужно ловить ревью с on hold между ними
             self.__anomalies.append(TooLongReviewAnomaly(timestamp=item.timestamp,
-                                                         assignee=item.name,
+                                                         responsible=item.name,
+                                                         fragmented=False,
                                                          expected_time=two_business_days,
                                                          actual_time=item.business_duration))
         pass
@@ -276,11 +269,17 @@ class IssueParser:
                                        after=after)
 
             if target_member == '__CUSTOM_FIELD__State_2':
-                before = entry['removed'][0]['name']
-                after = entry['added'][0]['name']
+                before = IssueState.parse(entry['removed'][0]['name'])
+                after = IssueState.parse(entry['added'][0]['name'])
                 self.__switch_state(timestamp=timestamp, 
                                     before=before, 
                                     after=after)
+                
+            if target_member == '__CUSTOM_FIELD__Estimation_19':
+                self.on_scope_changed(timestamp=timestamp, 
+                                      before=Duration.from_minutes(entry['removed']), 
+                                      after=Duration.from_minutes(entry['added']),
+                                      author=entry['author']['name'])
 
 
     def parse_activities(self, json) -> None:
@@ -313,7 +312,7 @@ class IssueParser:
         # (добавление workitem'a длинной в 1 минуту)
         if len(self.__work_items) > 1:
             elem0 = self.__work_items[0]
-            buffer_or_onhold = elem0.state == IssueState.Buffer or elem0.state == IssueState.OnHold
+            buffer_or_onhold = elem0.state.is_buffer() or elem0.state.is_hold()
             if buffer_or_onhold and elem0.duration == Duration.from_minutes(1):
                 elem0.state = self.__work_items[1].state
                 yt_logger.debug('Fixed 1m buffer')
@@ -354,15 +353,15 @@ class IssueParser:
             pauses=self.__pauses,
             subtasks=self.__subtasks,
             yt_errors=self.__yt_errors,
-            overdues=self.__overdues,
             component=self.__component,
             project=self.__project,
             anomalies=self.__anomalies
         )
 
 
-    def __add_state(self, timestamp: Timestamp, state: str) -> None:
-        assert state is not None and not is_empty(state)
+    def __add_state(self, timestamp: Timestamp, state: IssueState) -> None:
+        assert isinstance(timestamp, Timestamp)
+        assert isinstance(state, IssueState)
         if self.__parser_current_state is None:
             yt_logger.debug(f"{timestamp} [State] {state}")
         else:
@@ -370,12 +369,12 @@ class IssueParser:
         self.__parser_current_state = state
 
 
-    def __switch_state(self, timestamp: Timestamp, before: str, after: str) -> None:
+    def __switch_state(self, timestamp: Timestamp, before: IssueState, after: IssueState) -> None:
         assert isinstance(timestamp, Timestamp)
+        assert isinstance(before, IssueState)
+        assert isinstance(after, IssueState)
         if before == after:
             raise RuntimeError(f"Tried to change state to the same: '{before}' -> '{after}'")
-        if len(after) == 0:
-            raise RuntimeError(f"Tried to set empty state")
 
         if before != self.__parser_current_state:
             is_duplicate = False
@@ -389,21 +388,23 @@ class IssueParser:
             if is_duplicate:
                 self.__write_yt_error(ProblemKind.DuplicateStateSwitch, 
                                       f"{timestamp} Duplicate state switch for '{self.__assignees[-1].value}': '{before}'->'{self.__parser_current_state}'")
+                # Встречал всего один раз и там оказалось не критично, поэтому просто игнорим запись
+                return
             else:
                 raise RuntimeError(f"{timestamp} Previous state mismatch: '{before}'!='{self.__parser_current_state}'")
 
         # Паузы в работе
-        if self.__is_on_hold(before):
+        if before.is_hold():
             self.__end_pause(timestamp=timestamp.prev_second())
-        if self.__is_on_hold(after):
+        if after.is_hold():
             self.__begin_pause(timestamp)
 
         # Начало работы над задачей
-        if self.__started_datetime is None and self.__is_in_work(after):
+        if self.__started_datetime is None and after.is_in_work():
             self.__add_started(timestamp=timestamp)
 
         # Сброс статуса завершенной задачи если её вернули с того света
-        if self.__resolve_datetime is not None and after in ['In progress', 'Review', 'On hold', 'Buffer']:
+        if self.__resolve_datetime is not None and after.is_active():
             self.__resolve_datetime = None
         self.__add_state(timestamp=timestamp, state=after)
 
@@ -421,21 +422,16 @@ class IssueParser:
         yt_logger.debug(f"{timestamp} [Created] by {self.__author}")
 
 
-    def __add_overdue(self, timestamp: Timestamp) -> None:
-        assert isinstance(timestamp, Timestamp)
-        self.__overdues.append(ValueChangeEvent(timestamp=timestamp, 
-                                                value=self.__assignees[-1].value))
-        yt_logger.debug(f"{timestamp} [Overdue]")
-
-
     def __add_resolved(self, timestamp: Timestamp, name: str) -> None:
         assert isinstance(timestamp, Timestamp)
         self.__resolve_datetime = timestamp
         yt_logger.debug(f"{timestamp} [Resolved] by {name}")
         
 
-    def __add_work_item(self, timestamp: Timestamp, name: str, duration: Duration, state: str) -> None:
+    def __add_work_item(self, timestamp: Timestamp, name: str, duration: Duration, state: IssueState) -> None:
         assert isinstance(timestamp, Timestamp)
+        assert isinstance(duration, Duration)
+        assert isinstance(state, IssueState)
         temp = WorkItem(name=name,
                         timestamp=timestamp,
                         duration=duration,
@@ -464,7 +460,7 @@ class IssueParser:
             temp = WorkItem(name=self.__assignees[-1].value,
                             timestamp=self.__parser_previous_on_hold_begin,
                             duration=delta_with_previous,
-                            state=IssueState.OnHold)
+                            state=IssueState(IssueState.Pre.OnHold))
             self.__pauses.append(temp)
             yt_logger.debug(f"{self.__parser_previous_on_hold_begin} [Pause] {temp}")
         self.__parser_previous_on_hold_begin = None

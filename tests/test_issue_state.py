@@ -42,11 +42,29 @@ def test_special_functions(value: IssueState.Pre, buffer: bool, on_hold: bool, i
     assert v.is_active() == active
 
 
+@pytest.mark.parametrize(
+    'value, buffer, on_hold, in_progress, review, in_work, active', [
+                        # Buf  | Hold | InProgress | Review  | In work | Active
+        ('Todo',          False, False,       False,    False,    False, False),
+        ('Issue Created', False, False,       False,    False,    False, False),
+    ]
+)
+def test_handle_custom_states(value: str, buffer: bool, on_hold: bool, in_progress: bool, review: bool, in_work: bool, active: bool):
+    a = IssueState.parse(value)
+    assert a.is_buffer() == buffer
+    assert a.is_hold() == on_hold
+    assert a.is_in_progress() == in_progress
+    assert a.is_review() == review
+    assert a.is_in_work() == in_work
+    assert a.is_active() == active
+    assert str(a) == value
+
+
 def test_incorrect_parse():
     with pytest.raises(RuntimeError) as excinfo:
-        IssueState.parse('Something')
+        IssueState.parse('')
     assert excinfo.type is RuntimeError
-    assert "Unknown issue state 'something'" in str(excinfo.value)
+    assert "Tried to parse empty state" in str(excinfo.value)
 
 
 def test_compare():

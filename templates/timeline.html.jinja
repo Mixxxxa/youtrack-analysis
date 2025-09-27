@@ -299,6 +299,7 @@
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col">{{ _('timeline.tables.general.counter') }}</th>
                     <th scope="col">{{ _('timeline.tables.general.date') }}</th>
+                    <th scope="col">{{ _('timeline.tables.anomalies.responsible') }}</th>
                     <th scope="col">{{ _('timeline.tables.anomalies.details') }}</th>
                 </tr>
             </thead>
@@ -307,6 +308,7 @@
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
                     <td>{{item.datetime}}</td>
+                    <td>{{item.responsible}}</td>
                     <td>{{item.description}}</td>
                 </tr>
                 {% endfor %}

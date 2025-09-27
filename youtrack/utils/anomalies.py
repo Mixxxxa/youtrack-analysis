@@ -1,55 +1,57 @@
 from dataclasses import dataclass
 from .timestamp import Timestamp
 from .duration import Duration
-#from flask_babel import _
+from flask_babel import _
 
 
 @dataclass
 class Anomaly:
     timestamp: Timestamp
+    responsible: str 
 
 
 @dataclass
-class OverdueAnomaly(Anomaly):
-    assignee: str
+class OverdueAnomaly(Anomaly): #+
     def __str__(self):
-        return f'Нарушение сроков (overdue): {self.assignee}'
+        return _('anomaly.overdue')
 
 
 @dataclass
 class TooLongReviewAnomaly(Anomaly):
-    assignee: str
+    fragmented: bool
     expected_time: Duration
     actual_time: Duration
 
     def __str__(self):
-        return f'Нарушение сроков ревью: {self.assignee} ({self.actual_time} вместо {self.expected_time})'
-
-
-@dataclass
-class ShatteredTooLongReviewAnomaly(TooLongReviewAnomaly):
-    assignee: str
-    def __str__(self):
-        return f'Нарушение сроков ревью (c on hold): {self.assignee} ({self.actual_time} вместо {self.expected_time})'
+        if self.fragmented:
+            return _('anomaly.fragmented_too_long_review',
+                 actual_time=self.actual_time,
+                 expected_time=self.expected_time)
+        return _('anomaly.too_long_review', 
+                 actual_time=self.actual_time,
+                 expected_time=self.expected_time)
 
 
 @dataclass
 class ScopeOverrunAnomaly(Anomaly):
-    assignee: str
     scope: Duration
     spent_time: Duration
 
     def __str__(self):
-        return f'Нарушение Scope задачи: {self.assignee} ({self.spent_time} вместо {self.scope})'
+        return _('anomaly.scope_overrun', 
+                 scope=self.scope, 
+                 spent_time=self.spent_time)
     
 
 @dataclass
-class ScopeIncreasedAnomaly(Anomaly):
+class ScopeIncreasedAnomaly(Anomaly): #+
     before: Duration
     after: Duration
 
     def __str__(self):
-        return f'Скоуп задачи был увеличен: {self.before}->{self.after}'
+        return _('anomaly.scope_increased', 
+                 before=self.before.format_yt(), 
+                 after=self.after.format_yt())
     
 #Ideas:
 # Time added manually

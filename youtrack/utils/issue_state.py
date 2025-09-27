@@ -12,9 +12,10 @@ class IssueState:
         Duplicate = 'Duplicate'
 
 
-    def __init__(self, value: 'IssueState.Pre'):
-        assert value in IssueState.Pre
-        self.__value = value
+    def __init__(self, value: Pre|str):
+        # Значения бывают кастомные, поэтому разрешаем всё кроме пустых
+        assert len(value) > 0
+        self.__value: IssueState.Pre | str = value
 
     
     def __eq__(self, other):
@@ -31,24 +32,9 @@ class IssueState:
 
     @staticmethod
     def parse(state: str) -> 'IssueState':
-        state = state.strip().lower()
-        if state == 'buffer':
-            return IssueState(IssueState.Pre.Buffer)
-        elif state == 'on hold':
-            return IssueState(IssueState.Pre.OnHold)
-        elif state == 'in progress':
-            return IssueState(IssueState.Pre.InProgress)
-        elif state == 'review':
-            return IssueState(IssueState.Pre.Review)
-        elif state == 'resolved':
-            return IssueState(IssueState.Pre.Resolved)
-        elif state == 'suspend':
-            return IssueState(IssueState.Pre.Suspend)
-        elif state == 'wontfix':
-            return IssueState(IssueState.Pre.WontFix)
-        elif state == 'duplicate':
-            return IssueState(IssueState.Pre.Duplicate)
-        raise RuntimeError(f'Unknown issue state \'{state}\'')
+        if len(state) == 0:
+            raise RuntimeError('Tried to parse empty state')
+        return IssueState(state)
 
 
     def is_buffer(self) -> bool:

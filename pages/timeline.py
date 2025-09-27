@@ -49,8 +49,6 @@ def get_pauses_info(data: yt.IssueInfo) -> tuple[yt.Duration, yt.Duration, list[
 
 
 def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
-    overdues = [{'date': i.timestamp.format_ru(), 
-                    'name': i.value} for i in data.overdues]
     tags = [{'text': i.name, 
                 'bg_color': i.background_color, 
                 'fg_color': i.foreground_color} for i in data.tags]
@@ -74,6 +72,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
 
     anomalies = [{
         'datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
+        'responsible': i.responsible,
         'description': str(i)
     } for i in data.anomalies]
     
@@ -87,7 +86,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
             'id': i.id,
             'url': config.get_issue_url(i.id),
             'title': i.summary,
-            'state': i.state,
+            'state': str(i.state),
             'spent_time': i.spent_time_yt.format_yt(),
             'spent_time_order': i.spent_time_yt.to_seconds(),
             'percents': f'{i.spent_time_yt.to_seconds() / data.spent_time_yt.to_seconds() * 100:.2f}'
@@ -104,7 +103,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
         'id': data.id,
         'summary': data.summary,
         'author': data.author,
-        'state': data.state,
+        'state': str(data.state),
         'is_resolved': data.is_finished,
         'scope': data.scope.format_yt() if data.scope else None,
         'scope_overrun': data.scope_overrun,
@@ -116,7 +115,6 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
         'resolve_duration': data.resolution_time.format_yt_natural() if data.is_finished else None,
 
         # Containers
-        'overdues': overdues,
         'anomalies': anomalies,
         'tags': tags,
         'comments': comments,
@@ -136,7 +134,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
 def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:
     cont = collections.defaultdict(yt.Duration)
     for work_item in data.work_items:
-        key = (work_item.name, work_item.state) 
+        key = (work_item.name, str(work_item.state))
         cont[key] += work_item.duration
 
     def detailed_sorter(item) -> tuple[str,int]:
@@ -181,7 +179,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         df_workitems = pd.DataFrame([{'Assignee': i.name,
                                       'Start': i.begin().to_datetime(tz),
                                       'Finish': i.end().to_datetime(tz),
-                                      'State': i.state } for i in data.work_items])
+                                      'State': str(i.state) } for i in data.work_items])
     
     df_comments = pd.DataFrame([{'date': i.timestamp.to_datetime(tz),
                                  'author': i.author,
@@ -247,7 +245,10 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             legendgroup="misc",
             showlegend=(i==0)
         )
-    for i,overdue in enumerate(data.overdues):
+    for i,overdue in enumerate(data.anomalies):
+        if i is not yt.OverdueAnomaly:
+            continue
+
         fig.add_vline(
             x=overdue.timestamp.to_datetime(tz),
             line_color="DarkRed", 
