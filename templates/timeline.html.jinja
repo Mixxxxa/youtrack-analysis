@@ -63,6 +63,7 @@
                 data-bs-target="#{{ id }}-collapse-one" 
                 aria-expanded="true" 
                 aria-controls="{{ id }}-collapse-one">
+                    <i class="bi bi-question-circle me-3" style="font-size: 1.2rem"></i>
                     {{ title }}
             </button>
         </h2>
@@ -163,8 +164,8 @@
         <p><b>{{ _('issue.scope') }}:</b> {{ scope|default(null_value_placeholder, true) }}</p>
         <p><b>{{ _('issue.spent_time') }}:</b> {{ spent_time }}</p>
         <p><b>{{ _('issue.scope_overrun') }}:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('issue.scope_overrun.help_text')) }}</p>
-        <p><b>{{ _('issue.spent_time_direct') }}:</b> {{ spent_time_real }} {{ help_tooltip(text=_('issue.spent_time_direct.help_text')) }}</p>
-        <p><b>{{ _('issue.spent_time_subtasks') }}:</b> {{subtasks.total}} {{ help_tooltip(text=_('issue.spent_time_subtasks.help_text')) }}</p>
+        <p><b>{{ _('issue.spent_time_dir_sub_calc') }}:</b> {{ spent_time_real }} / {{subtasks.total}} {{ help_tooltip(text=_('issue.spent_time_dir_sub_calc.help_text')) }}</p>
+        <p><b>{{ _('issue.on_hold_time_business') }}:</b> {{pauses.total_business}} {{ help_tooltip(text=_('issue.on_hold_time_business.help_text')) }}</p>
     </div>
 </div>
 <ul class="nav nav-tabs" id="myTab" role="tablist">

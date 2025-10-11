@@ -197,6 +197,9 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         df_assignee_entries.append({ 'date': data.resolve_datetime.to_datetime(tz) if data.is_finished else yt.Timestamp.now().to_datetime(tz), 'assignee': prev.value })
     df_assignee = pd.DataFrame(df_assignee_entries)
 
+    # HACK: Empty extra to remove series name
+    hide_series_name = '<extra></extra>'
+
     fig = ex.timeline(
         df_workitems, 
         x_start='Start', 
@@ -217,14 +220,16 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             line=dict(width=2, color='red'),
             legendgroup="misc",
             legendgrouptitle_text=_('timeline.chart.legend.other'),
-            name=_('timeline.chart.legend.assignee')
+            name=_('timeline.chart.legend.assignee'),
+            hovertemplate="<b>Assignee</b><br><i>%{x}</i><br>%{y}"+hide_series_name
         )
     )
     if not yt.is_empty(data.comments):
         fig.add_trace(go.Scatter(
             x=df_comments['date'],
             y=df_comments['author'],
-            text=df_comments['text'],
+            text=df_comments['text'].str.wrap(width=70, subsequent_indent='<br>'),
+            hovertemplate="<b>%{y}</b><br><i>%{x}</i><br>%{text}"+hide_series_name,
             name=_('timeline.chart.legend.comments'),
             mode='markers',
             marker=dict(size=10, color='DarkViolet'),
