@@ -1,8 +1,8 @@
 requests
 pytest
-gunicorn
-pandas == 2.2.3
+gunicorn == 23.0.0
+pandas == 2.3.3
 numpy == 2.2.4
-Flask == 3.1.1
-Flask-Babel
-plotly == 6.0.1
+Flask == 3.1.2
+Flask-Babel == 4.0.0
+plotly == 6.3.1
