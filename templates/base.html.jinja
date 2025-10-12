@@ -1,3 +1,20 @@
+{# 
+Copyright 2025 Mikhail Gelvikh
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
 {% macro alert_block(text, type='warning') -%}
 <div class="alert alert-{{ type }}" role="alert">
     {{ text }}
@@ -12,6 +29,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
         /* Светлая тема с приглушенными цветами и темная тема */
         :root {
@@ -191,7 +209,7 @@
                         })
                     })
             })
-        })()
+        })();
     </script>
     {% endblock %}
 </head>
@@ -231,7 +249,7 @@
                     </button>
                     <ul class="dropdown-menu">
                         {% for entry in supported_languages %}
-                            <li><a class='dropdown-item {{"active" if entry.is_active}}' href='{{ url_for_language(entry.code) }}' data-language='{{entry.code}}'>{{entry.display_name}}</a></li>
+                            <li><a class='dropdown-item {{"active" if entry.is_active}}' href='{{get_link_for_lang(request.url, entry.code)}}' data-language='{{entry.code}}'>{{entry.display_name}}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -244,12 +262,14 @@
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="sidebarLabel">{{ _('base.menu_title') }}</h5>
+            <h5 class="offcanvas-title" id="sidebarLabel">{{ _('base.menu.title') }}</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="base.close_button"></button>
         </div>
         <div class="offcanvas-body">
             <ul class="list-group list-group-flush">
-                <li class="list-group-item bg-transparent border-0"><a href="timeline" class="text-decoration-none">Timeline</a></li>
+                <li class="list-group-item bg-transparent border-0"><a href="{{ get_link_for_lang('/', settings.lang_code) }}" class="text-decoration-none">{{ _('base.menu.home_entry') }}</a></li>
+                <li class="list-group-item bg-transparent border-0"><a href="{{ get_link_for_lang('/timeline', settings.lang_code) }}" class="text-decoration-none">{{ _('home.mode_selector.timeline.title') }}</a></li>
+                <li class="list-group-item bg-transparent border-0"><a href="{{ get_link_for_lang('/batch', settings.lang_code) }}" class="text-decoration-none">{{ _('home.mode_selector.batch.title') }}</a></li>
             </ul>
         </div>
     </div>
@@ -267,6 +287,27 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        // Утилиты
+        function escapeHtml(str) {
+            if (str == null) return '';
+            let lookup = {
+                '&': "&amp;",
+                '"': "&quot;",
+                '\'': "&apos;",
+                '<': "&lt;",
+                '>': "&gt;"
+            };
+            return str.replace( /[&"'<>]/g, c => lookup[c] );
+        }
+
+        function getIssueUrl(issueId){
+            return `https://{{ host_name }}/youtrack/issue/${encodeURIComponent(issueId)}`;
+        }
+
+        function getTimelineUrl(issueId, lang){
+            return `${location.origin}/${lang}/timeline?issue=${encodeURIComponent(issueId)}`;
+        }
     </script>
     {% endblock %}
 </body>

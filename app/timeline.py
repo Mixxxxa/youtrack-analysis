@@ -1,5 +1,20 @@
+# Copyright 2025 Mikhail Gelvikh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import collections
-import youtrack as yt
 from datetime import timezone
 import pandas as pd
 import plotly.graph_objects as go
@@ -7,24 +22,34 @@ import plotly.express as ex
 import plotly.io as pio
 from dataclasses import dataclass, field
 from functools import cached_property
-from flask_babel import _
+from typing import Callable
+
+from youtrack.utils.anomalies import AnomaliesDetector, OverdueAnomaly
+from youtrack.utils.timestamp import Timestamp
+from youtrack.utils.duration import Duration
+from youtrack.utils.others import is_empty
+from youtrack.utils.problems import IssueProblem
+from youtrack.helper import YouTrackHelper
+from youtrack.entities import IssueInfo, WorkItem, get_workitem_business_duration
+
+from .settings import Settings, LocalSettings
 
 
 @dataclass
 class PersonPauses:
-    pauses: list[yt.WorkItem] = field(default_factory=list)
+    pauses: list[WorkItem] = field(default_factory=list)
 
     @cached_property
-    def total(self) -> yt.Duration:
-        sum = yt.Duration()
+    def total(self) -> Duration:
+        sum = Duration()
         for i in self.pauses:
             sum += i.business_duration
         return sum
 
 
-def get_pauses_info(data: yt.IssueInfo) -> tuple[yt.Duration, yt.Duration, list[PersonPauses]]:
-    total = yt.Duration()
-    total_business = yt.Duration()
+def get_pauses_info(data: IssueInfo) -> tuple[Duration, Duration, list[PersonPauses]]:
+    total = Duration()
+    total_business = Duration()
     by_people = collections.defaultdict(PersonPauses)
 
     for i in data.pauses:
@@ -34,7 +59,7 @@ def get_pauses_info(data: yt.IssueInfo) -> tuple[yt.Duration, yt.Duration, list[
 
     pauses = []
     for entry in sorted(by_people.items(), key=lambda x: x[1].total, reverse=True):
-        for i in sorted(entry[1].pauses, key=yt.get_workitem_business_duration, reverse=True):
+        for i in sorted(entry[1].pauses, key=get_workitem_business_duration, reverse=True):
             pauses.append({
                 'name': entry[0],
                 'begin': i.begin().format_ru(),
@@ -48,7 +73,7 @@ def get_pauses_info(data: yt.IssueInfo) -> tuple[yt.Duration, yt.Duration, list[
     return total, total_business, pauses
 
 
-def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
+def to_dict(data: IssueInfo, config: LocalSettings):
     tags = [{'text': i.name, 
                 'bg_color': i.background_color, 
                 'fg_color': i.foreground_color} for i in data.tags]
@@ -56,12 +81,12 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
                     'author': i.author, 
                     'text': i.text} for i in data.comments]
     
-    def affected_field_to_str(field: yt.IssueProblem.AffectedField) -> str:
-        if field == yt.IssueProblem.AffectedField.SpentTime:
+    def affected_field_to_str(field: IssueProblem.AffectedField) -> str:
+        if field == IssueProblem.AffectedField.SpentTime:
             return 'Spent Time'
-        elif field == yt.IssueProblem.AffectedField.ScopeOverrun:
+        elif field == IssueProblem.AffectedField.ScopeOverrun:
             return 'Превышение Scope'
-        elif field == yt.IssueProblem.AffectedField.State:
+        elif field == IssueProblem.AffectedField.State:
             return 'State'
         raise RuntimeError('Unknown affected field')
     
@@ -73,7 +98,7 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
     pauses_total,pauses_total_business,pauses_by_people = get_pauses_info(data)
 
     subtasks = []
-    subtasks_total_spent_time = yt.Duration()
+    subtasks_total_spent_time = Duration()
     for i in sorted(data.subtasks, key=lambda x: x.spent_time_yt, reverse=True):
         subtasks_total_spent_time += i.spent_time_yt
         subtasks.append({
@@ -124,8 +149,8 @@ def to_dict(data: yt.IssueInfo, config: yt.YouTrackConfig):
     }
 
 
-def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:
-    cont = collections.defaultdict(yt.Duration)
+def get_detailed_info(data: IssueInfo) -> list[dict[str, str]]:
+    cont = collections.defaultdict(Duration)
     for work_item in data.work_items:
         key = (work_item.name, str(work_item.state))
         cont[key] += work_item.duration
@@ -145,8 +170,8 @@ def get_detailed_info(data: yt.IssueInfo) -> list[dict[str, str]]:
              'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
 
 
-def get_by_people_info(data: yt.IssueInfo) -> list[dict[str, str]]:
-    cont = collections.defaultdict(yt.Duration)
+def get_by_people_info(data: IssueInfo) -> list[dict[str, str]]:
+    cont = collections.defaultdict(Duration)
     for work_item in data.work_items:
         cont[work_item.name] += work_item.duration
 
@@ -159,11 +184,16 @@ def get_by_people_info(data: yt.IssueInfo) -> list[dict[str, str]]:
              'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
 
 
-def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfig):
-    two_business_days = yt.Duration.from_minutes(60*8*2)
-    anomaly_detector = yt.AnomaliesDetector(review_thresshold=two_business_days)
-    data = yt.ApiHelper(config=config).get_summary(id=issue_id, 
-                                                   anomaly_detector=anomaly_detector)
+async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str, tz: timezone, settings: Settings):
+    _ = translator
+    
+    two_business_days = Duration.from_minutes(60*8*2)
+    anomaly_detector = AnomaliesDetector(review_thresshold=two_business_days)
+    helper = YouTrackHelper(instance_url=settings.app_config.host,
+                            api_key=settings.app_config.api_key)
+    data = await helper.get_summary(id=issue_id, 
+                                    anomaly_detector=anomaly_detector,
+                                    custom_fields=settings.app_config.custom_fields)
     anomalies_data = anomaly_detector.get()
 
     # Quickfix if there are no workitems
@@ -172,7 +202,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
                                  'Finish': [],
                                  'State': []})
     
-    if not yt.is_empty(data.work_items):
+    if not is_empty(data.work_items):
         df_workitems = pd.DataFrame([{'Assignee': i.name,
                                       'Start': i.begin().to_datetime(tz),
                                       'Finish': i.end().to_datetime(tz),
@@ -194,7 +224,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
     if len(data.assignees) > 0:
         prev = data.assignees[-1]
         df_assignee_entries.append({ 'date': prev.timestamp.to_datetime(tz), 'assignee': prev.value })
-        df_assignee_entries.append({ 'date': data.resolve_datetime.to_datetime(tz) if data.is_finished else yt.Timestamp.now().to_datetime(tz), 'assignee': prev.value })
+        df_assignee_entries.append({ 'date': data.resolve_datetime.to_datetime(tz) if data.is_finished else Timestamp.now().to_datetime(tz), 'assignee': prev.value })
     df_assignee = pd.DataFrame(df_assignee_entries)
 
     # HACK: Empty extra to remove series name
@@ -224,7 +254,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
             hovertemplate="<b>Assignee</b><br><i>%{x}</i><br>%{y}"+hide_series_name
         )
     )
-    if not yt.is_empty(data.comments):
+    if not is_empty(data.comments):
         fig.add_trace(go.Scatter(
             x=df_comments['date'],
             y=df_comments['author'],
@@ -249,7 +279,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         )
 
     for i,entry in enumerate(anomalies_data):
-        if not isinstance(entry, yt.OverdueAnomaly):
+        if not isinstance(entry, OverdueAnomaly):
             continue
 
         fig.add_vline(
@@ -315,7 +345,7 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         ),
         range=[
             range_min.to_datetime(tz),
-            range_max.to_datetime(tz) if data.is_finished else yt.Timestamp.now().to_datetime(tz)
+            range_max.to_datetime(tz) if data.is_finished else Timestamp.now().to_datetime(tz)
         ],
         rangeslider_visible=True,
         tickformatstops=[
@@ -328,17 +358,17 @@ def get_timeline_page_data(issue_id: str, tz: timezone, config: yt.YouTrackConfi
         ]
     )
     template_data = dict(
-        issue_url=config.get_issue_url(issue_id),
+        issue_url=settings.app_config.get_issue_url(issue_id),
         graph_div=pio.to_html(fig, full_html=False, div_id='9cc162d8-61cf-4829-aede-73d8b3495197'),
         anomalies = [{
             'datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
             'responsible': i.responsible,
-            'description': str(i)
+            'description': i.to_string(_=translator)
         } for i in anomalies_data],
         tables={
-            'detailed': get_detailed_info(data),
-            'by_people': get_by_people_info(data)
+           'detailed': get_detailed_info(data),
+           'by_people': get_by_people_info(data)
         }
     )
-    template_data.update(to_dict(data, config))
+    template_data.update(to_dict(data, settings.app_config))
     return template_data

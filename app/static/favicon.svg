@@ -1,0 +1,112 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon stats icon with bars and check badge">
+  <title>Neon stats icon</title>
+  <defs>
+    
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f2a3b"/>
+      <stop offset="100%" stop-color="#0b1f2d"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff31b5"/>
+      <stop offset="50%" stop-color="#7b5cff"/>
+      <stop offset="100%" stop-color="#18e0e7"/>
+    </linearGradient>
+
+    
+    <linearGradient id="barPink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff4fbd"/>
+      <stop offset="100%" stop-color="#b64cff"/>
+    </linearGradient>
+    <linearGradient id="barPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c37cff"/>
+      <stop offset="100%" stop-color="#7c52ff"/>
+    </linearGradient>
+    <linearGradient id="barCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#42e9ff"/>
+      <stop offset="100%" stop-color="#00bfe9"/>
+    </linearGradient>
+
+    
+    <filter id="warmGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    
+    <filter id="borderGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feOffset dx="0" dy="10" in="SourceAlpha" result="o"/>
+      <feGaussianBlur in="o" stdDeviation="16" result="g"/>
+      <feColorMatrix in="g" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.35 0" result="s"/>
+      <feMerge>
+        <feMergeNode in="s"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  
+  <g filter="url(#softShadow)">
+    <rect x="48" y="48" width="416" height="416" rx="96" fill="url(#bgGrad)"/>
+    
+    <rect x="48" y="48" width="416" height="416" rx="96"
+          fill="none" stroke="url(#borderGrad)" stroke-width="24" opacity="0.65"
+          filter="url(#borderGlow)"/>
+    <rect x="48" y="48" width="416" height="416" rx="96"
+          fill="none" stroke="url(#borderGrad)" stroke-width="8" opacity="0.9"/>
+  </g>
+
+  
+  <g>
+    
+    <path d="M156 160 L156 336 L336 336"
+          stroke="#ffd972" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"
+          opacity="0.7" filter="url(#warmGlow)"/>
+    
+    <path d="M156 160 L156 336 L336 336"
+          stroke="#fff6cf" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  
+  <g>
+    
+    <rect x="188" y="248" width="52" height="88" rx="12" fill="url(#barPink)"/>
+    
+    <rect x="252" y="196" width="56" height="140" rx="12" fill="url(#barPurple)"/>
+    
+    <rect x="320" y="156" width="56" height="180" rx="12" fill="url(#barCyan)"/>
+  </g>
+
+  
+  <g>
+    
+    <rect x="284" y="268" width="118" height="118" rx="24"
+          fill="none" stroke="#ffd972" stroke-width="26" opacity="0.6"
+          filter="url(#warmGlow)"/>
+    
+    <rect x="292" y="276" width="102" height="102" rx="20"
+          fill="#ffffff" stroke="#e9eef8" stroke-width="4"/>
+    
+    <path d="M312 328 L342 356 L384 306"
+          fill="none" stroke="#243244" stroke-width="12"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  
+  <ellipse cx="140" cy="120" rx="120" ry="60" fill="white" opacity="0.06"/>
+</svg>

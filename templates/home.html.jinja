@@ -1,0 +1,307 @@
+{# 
+Copyright 2025 Mikhail Gelvikh
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+{% extends "base.html.jinja" %}
+
+{% block head %}
+    {{ super() }}
+    <title>YouTrack Analyzer — Home</title>
+    <style>
+        .home-wrapper {
+            min-height: calc(100dvh - 56px); /* с учётом высоты navbar */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* На всякий случай — убираем возможные «хвостики» отступов снизу */
+        .home-wrapper .row:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Убираем внешний отступ, который добавляет base.html */
+        .container.mt-4 {
+            margin-top: 0 !important;
+        }
+
+        .tile-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .feature-tile {
+            border-radius: 1.5rem;
+            background-color: var(--sidebar-bg);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.75rem 1.75rem 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease,
+                border-color 0.25s ease,
+                background-color 0.25s ease;
+        }
+
+        .feature-tile:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.15);
+            border-color: var(--btn-bg);
+        }
+
+        .feature-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .feature-title-icon {
+            font-size: 1.4rem;
+            opacity: .85;
+        }
+
+        .feature-description {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        /* Мини-«презентация» — столбиковый график, который оживает при ховере */
+        .feature-demo {
+            margin-top: 1.25rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 6px;
+            height: 70px;
+        }
+
+        .demo-bar {
+            width: 10px;
+            border-radius: 999px;
+            background: var(--btn-bg);
+            opacity: 0.85;
+            height: 18px;
+            transition: height 0.35s ease, opacity 0.35s ease;
+        }
+
+        .feature-tile:hover .demo-bar {
+            opacity: 1;
+        }
+
+        .feature-tile:hover .demo-bar:nth-child(1) {
+            height: 28px;
+        }
+
+        .feature-tile:hover .demo-bar:nth-child(2) {
+            height: 45px;
+        }
+
+        .feature-tile:hover .demo-bar:nth-child(3) {
+            height: 36px;
+        }
+
+        .feature-tile:hover .demo-bar:nth-child(4) {
+            height: 55px;
+        }
+
+        .feature-tile:hover .demo-bar:nth-child(5) {
+            height: 40px;
+        }
+
+        .feature-footer {
+            margin-top: 1.25rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            opacity: 0.8;
+        }
+
+        .feature-tile:hover .feature-footer {
+            opacity: 1;
+        }
+
+        @media (max-width: 767.98px) {
+            .feature-tile {
+                border-radius: 1.1rem;
+                padding: 1.5rem 1.25rem 1.25rem;
+            }
+        }
+
+        /* Timeline-анимация */
+        /* Простая timeline-блок-схема с анимацией только точек */
+        .feature-timeline {
+            position: relative;
+            margin-top: 1.25rem;
+            height: 80px;
+            display: grid;
+            place-items: center;
+        }
+
+        /* Область трека */
+        .timeline-area {
+            position: relative;
+            width: min(520px, 82%);
+            height: 24px;
+        }
+
+        /* Статичная линия-трек */
+        .timeline-track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            transform: translateY(-50%);
+            border-radius: 999px;
+            background-color: var(--icon-color);
+            opacity: 0.4;
+        }
+
+        /* Контейнер точек */
+        .timeline-dots {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-inline: 2px;
+        }
+
+        /* Точки-события */
+        .timeline-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            opacity: 0.75;
+            transform: scale(0.9);
+            transition:
+                transform 0.22s ease-out,
+                opacity 0.22s ease-out;
+        }
+
+        /* При наведении на плитку только точки оживают */
+        .feature-tile:hover .timeline-dot {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* Небольшая ступенчатая задержка — получается эффект пробегающего “фокуса” по точкам */
+        .feature-tile:hover .timeline-dot:nth-child(1) { transition-delay: 0.03s; }
+        .feature-tile:hover .timeline-dot:nth-child(2) { transition-delay: 0.06s; }
+        .feature-tile:hover .timeline-dot:nth-child(3) { transition-delay: 0.09s; }
+        .feature-tile:hover .timeline-dot:nth-child(4) { transition-delay: 0.12s; }
+        .feature-tile:hover .timeline-dot:nth-child(5) { transition-delay: 0.15s; }
+        .feature-tile:hover .timeline-dot:nth-child(6) { transition-delay: 0.18s; }
+    </style>
+{% endblock %}
+
+{% block navbargadget %}
+    <span class="navbar-brand ms-2">
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="home-wrapper">
+    <div class="container">
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 text-center">
+                <h1 class="h3 mb-2">{{ _('home.mode_selector.title') }}</h1>
+                <p class="text-muted mb-0">
+                    {{ _('home.mode_selector.description') }}
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{{get_link_for_lang('/timeline', settings.lang_code)}}" class="tile-link">
+                    <div class="feature-tile">
+                        <div>
+                            <div class="feature-title mb-2">
+                                <span class="feature-title-icon">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <h2 class="h5 mb-0">{{ _('home.mode_selector.timeline.title') }}</h2>
+                            </div>
+                            <p class="feature-description mb-0">
+                                {{ _('home.mode_selector.timeline.description') }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="feature-timeline" aria-hidden="true">
+                                <div class="timeline-area">
+                                    <div class="timeline-track"></div>
+                                    <div class="timeline-dots">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-footer">
+                                <span>{{ _('home.mode_selector.timeline.link_text') }}</span>
+                                <i class="bi bi-arrow-right-short"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{{get_link_for_lang('/batch', settings.lang_code)}}" class="tile-link">
+                    <div class="feature-tile">
+                        <div>
+                            <div class="feature-title mb-2">
+                                <span class="feature-title-icon">
+                                    <i class="bi bi-collection"></i>
+                                </span>
+                                <h2 class="h5 mb-0">{{ _('home.mode_selector.batch.title') }}</h2>
+                            </div>
+                            <p class="feature-description mb-0">
+                                {{ _('home.mode_selector.batch.description') }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="feature-demo" aria-hidden="true">
+                                <div class="demo-bar"></div>
+                                <div class="demo-bar"></div>
+                                <div class="demo-bar"></div>
+                                <div class="demo-bar"></div>
+                                <div class="demo-bar"></div>
+                            </div>
+                            <div class="feature-footer">
+                                <span>{{ _('home.mode_selector.batch.link_text') }}</span>
+                                <i class="bi bi-arrow-right-short"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

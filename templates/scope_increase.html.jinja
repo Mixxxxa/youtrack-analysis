@@ -1,0 +1,384 @@
+{# 
+Copyright 2025 Mikhail Gelvikh
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+{% extends "batch_base.html.jinja" %}
+
+{% block head %}
+{{ super() }}
+<title>{{ _('batch.title') }} — YouTrack Analyzer</title>
+{% endblock %}
+
+{% block navbargadget %}
+<span class="navbar-brand ms-2">{{ _('batch.title') }}</span>
+{% endblock %}
+
+{% block batch_content %}
+<div class="card mb-4">
+    <div class="card-header">
+        {{ _('batch.scope_overrun.search.title') }}
+    </div>
+    <div class="card-body">
+        <form id="filter-form" class="row gy-3 gx-3 align-items-end filters-row" onsubmit="return false;">
+            <div class="col-12 align-self-start col-md-3-fixed">
+                <label for="project-select" class="form-label">{{ _('batch.scope_overrun.search.project') }}</label>
+                <select id="project-select" class="form-select" required></select>
+            </div>
+            <div class="col-12 align-self-start col-md-5-fixed">
+                <label class="form-label" for="component-dropdown-btn">{{ _('batch.scope_overrun.search.components')}}</label>
+                <div class="dropdown components-dropdown w-100" id="component-dropdown">
+                    <button id="component-dropdown-btn"
+                        class="btn btn-outline-secondary w-100 text-start components-toggle dropdown-toggle"
+                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        {{ _('batch.scope_overrun.search.selected_components.selected_info') }}
+                    </button>
+                    <div class="dropdown-menu" id="component-menu" aria-labelledby="component-dropdown-btn">
+                        <div class="components-toolbar">
+                            <div class="d-flex gap-2">
+                                <div class="flex-grow-1">
+                                    <input id="component-search" type="search" class="form-control form-control-sm"
+                                        placeholder="{{ _('batch.scope_overrun.search.selected_components.internal_placeholder') }}">
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="components-select-all" title="{{ _('base.select_all') }}">
+                                        {{ _('base.select_all') }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="components-clear-all" title="{{ _('base.clear_all') }}">
+                                        {{ _('base.clear_all') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="components-list" id="components-list">
+                            <div id="components-special"></div>
+                            <div id="components-divider" class="components-divider d-none"></div>
+                            <div id="components-regular"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-text">{{ _('batch.scope_overrun.search.components_hint') }}</div>
+            </div>
+            <div class="col-6 align-self-start col-md-2-fixed">
+                <label for="date-from" class="form-label">{{ _('batch.scope_overrun.search.date_begin') }}</label>
+                <input type="date" class="form-control" id="date-from" required>
+            </div>
+            <div class="col-6 align-self-start col-md-2-fixed">
+                <label for="date-to" class="form-label">{{ _('batch.scope_overrun.search.date_end') }}</label>
+                <input type="date" class="form-control" id="date-to" required>
+                <div class="form-text">{{ _('batch.scope_overrun.search.date_end_hint') }}</div>
+            </div>
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="analyze-btn" type="button" class="btn btn-custom">
+                        <i class="bi bi-arrow-right-circle me-1"></i>{{ _('batch.scope_increase.search.go_button') }}
+                    </button>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            {{ _('batch.scope_overrun.search.date_presets') }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if date_presets is defined and date_presets %}
+                            {% for p in date_presets %}
+                            <li>
+                                <a class="dropdown-item preset-item" href="javascript:void(0)" data-from="{{ p.begin }}" data-to="{{ p.end }}">
+                                    {{ p.name }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% endif %}
+                            {% for p in predefined_date_presets %}
+                            <li>
+                                <a class="dropdown-item preset-item" href="javascript:void(0)" data-from="{{ p.begin }}"
+                                    data-to="{{ p.end }}">
+                                    {{ p.name }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div id="form-alert" class="mt-3 d-none"></div>
+    </div>
+</div>
+
+{% if dataset is defined %}
+{% if dataset %}
+<div class="card mb-4">
+    <div class="card-header">
+        {{ _('batch.summary.title') }}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col">
+                <div class="text-body-secondary">{{ _('batch.scope_overrun.summary.count_total') }}: {{ dataset.stats.count_total }}</div>
+                <div class="text-body-secondary">{{ _('batch.scope_increase.summary.count_ok') }}: {{ dataset.stats.count_ok }} ({{ '%.2f' % (dataset.stats.count_ok / dataset.stats.count_total * 100) }}%)</div>
+                <div class="text-body-secondary">{{ _('batch.scope_increase.summary.count_overrun') }}: {{ dataset.stats.count_fail }} ({{ '%.2f' % (dataset.stats.count_fail / dataset.stats.count_total * 100) }}%)</div>
+            </div>
+            <div class="col">
+                <div class="text-body-secondary">{{ _('batch.scope_increase.summary.mean_increase') }}: {{ dataset.stats.mean_scope_increase }}</div>
+                <div class="text-body-secondary">{{ _('batch.scope_increase.summary.median_increase') }}: {{ dataset.stats.median_scope_increase }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<table id="tasks-table" class="table table-hover nowrap table-sm" style="width:100%">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>{{ _('issue.summary') }}</th>
+            <th>{{ _('issue.state') }}</th>
+            <th>{{ _('issue.component') }}</th>
+            <th>{{ _('issue.assignee') }}</th>
+            <th>{{ _('issue.scope') }}</th>
+            <th>{{ _('issue.spent_time_yt') }}</th>
+            <th>{{ _('issue.total_scope_increase') }}</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<div class="text-muted small">
+    {{ _('batch.table_cards_hint') }}
+</div>
+{% else %}
+{{ alert_block(_('batch.empty_state_text'), 'primary')}}
+{% endif %}
+
+{% if dataset is defined %}
+<div class="text-muted small mb-2 mt-2">
+    {{ _('batch.query_text') }}: <a href="{{ dataset.query_url }}" target="_blank" rel="noopener">{{ dataset.query }}</a>
+</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}
+
+{% block additionalscripts %}
+{{ super() }}
+<script>
+    function formatChild(row) {
+        const dateFormat = '{{ settings.date_format }}';
+        const dateTimeFormat = '{{ settings.datetime_format }}';
+        const datetimeZone = '{{ settings.timezone }}';
+        const langCode = '{{ settings.lang_code }}'
+        const NA_text = 'N/A';
+        
+        const created_datetime = row.created_datetime ? luxon.DateTime.fromMillis(row.created_datetime)
+                                                                      .setLocale(langCode)
+                                                                      .setZone(datetimeZone)
+                                                                      .toFormat(dateFormat)
+                                                      : NA_text;
+        const resolved_datetime = row.resolved_datetime ? luxon.DateTime.fromMillis(row.resolved_datetime)
+                                                                        .setLocale(langCode)
+                                                                        .setZone(datetimeZone)
+                                                                        .toFormat(dateFormat)
+                                                        : NA_text;
+        const tagsHtml = row.tags.map(t => {
+            const text = escapeHtml(t.text);
+            const bg = escapeHtml(t.bg_color);
+            const fg = escapeHtml(t.fg_color);
+            return `<span class="badge me-1 mb-1" style="background-color:${bg};color:${fg};">${text}</span>`;
+        }).join('');
+
+        const anomaliesToHtml = function(anomaliesList) {
+            if(anomaliesList.length === 0){
+                return '<div class="text-body-secondary small">-</span></div>'
+            }
+            return row.anomalies.map(t => {
+                const timestamp = t.timestamp ? luxon.DateTime.fromISO(t.timestamp)
+                                                              .setLocale(langCode)
+                                                              .setZone(datetimeZone)
+                                                              .toFormat(dateTimeFormat)
+                                              : NA_text;
+                return `<div class="text-body-secondary small">[${escapeHtml(timestamp)}] ${escapeHtml(t.description)}</span></div>`;
+            }).join('');
+        };
+
+        return `
+            <div class="dt-child-content">
+                <div class="row g-2">
+                    <div class="col-12 col-md-4">
+                        <div class="fw-semibold mb-1">{{ _('batch.scope_overrun.details.general') }}</div>
+                        <div class="text-body-secondary small">ID: <a href="${getIssueUrl(row.id)}" target="_blank" rel="noopener">${escapeHtml(row.id)}</a></div>
+                        <div class="text-body-secondary small">{{ _('issue.component') }}: ${escapeHtml(row.component ?? NA_text)}</div>
+                        <div class="text-body-secondary small">{{ _('issue.priority') }}: ${escapeHtml(row.priority ?? NA_text)}</div>
+                        <div class="text-body-secondary small">{{ _('issue.assignee') }}: ${escapeHtml(row.assignee ?? NA_text)}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="fw-semibold mb-1">Scope</div>
+                        <div class="text-body-secondary small">{{ _('issue.scope') }}: ${escapeHtml(row.scope ?? NA_text)}</div>
+                        <div class="text-body-secondary small">{{ _('issue.spent_time_yt') }}: ${escapeHtml(row.spent_time ?? NA_text)}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="fw-semibold mb-1">{{ _('batch.scope_overrun.details.dates') }}</div>
+                        <div class="text-body-secondary small">{{ _('issue.created') }}: ${escapeHtml(created_datetime)}</div>
+                        <div class="text-body-secondary small">{{ _('issue.resolve_datetime') }}: ${escapeHtml(resolved_datetime)}</div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="fw-semibold mb-1">{{ _('issue.summary') }}</div>
+                        <div>${escapeHtml(row.title)}</div>
+                        ${row.tags.length ? `<div class="mt-2 d-flex flex-wrap">${tagsHtml}</div>` : ''}
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="fw-semibold mb-1">{{ _('batch.scope_overrun.details.anomalies') }}</div>
+                        ${anomaliesToHtml(row.anomalies)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    {% if dataset is defined and dataset.entries %}
+        document.addEventListener('DOMContentLoaded', function () {
+            const tasksData = {{ dataset.entries | tojson }};
+            const table = new DataTable('#tasks-table', {
+                language: {
+                    url: current_lang === 'ru' ? '/static/datatables-2.3.4-ru.json' : '',
+                },
+                layout: {
+                    topStart: {
+                        buttons: ['colvis'],
+                        pageLength: {}
+                    },
+                    topEnd: {
+                        search: {
+                            placeholder: '{{ _("batch.search.fulltext_search_feature_hint") }}'
+                        },
+                        buttons: [ 
+                            {
+                                extend: 'collection',
+                                text: 'Export',
+                                buttons: [
+                                    {
+                                        extend: 'copy',
+                                        exportOptions: { orthogonal: 'export' }
+                                    },
+                                    {
+                                        extend: 'csv',
+                                        exportOptions: { orthogonal: 'export' }
+                                    },
+                                    {
+                                        extend: 'excel',
+                                        exportOptions: { orthogonal: 'export' }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                data: tasksData,
+                columns: [
+                    {
+                        data: 'id',
+                        render: function (data, type, row) {
+                            if (type === 'display') {
+                                return `
+                                    <a href="${getIssueUrl(data)}" target="_blank" rel="noopener">${escapeHtml(data)}</a>
+                                    <a class="ms-2 text-decoration-none" href="${getTimelineUrl(data, current_lang)}" target="_blank" rel="noopener" title="{{ _('batch.go_to_timeline_tooltip') }}">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                    </a>
+                                `;
+                            } 
+                            else if(type === 'sort' || type === 'type')
+                            {
+                                return parseInt(row.id_value);
+                            }
+                            return data;
+                        }
+                    },
+                    {
+                        data: 'title',
+                        className: 'col-title',
+                        render: function (data, type, row) {
+                            if (type !== 'display')
+                            {
+                                return data;
+                            }
+                            const pr = (row.priority || '').toString();
+                            const letter = pr ? pr.charAt(0).toUpperCase() : '';
+                            const cls = `pri-${pr.toLowerCase()}`; // blocker/critical/major/normal/minor
+                            const cutoff = 40;
+                            const text = data.length < cutoff ? data : data.substr(0, cutoff-1) +'...';
+                            return `
+                                <div class="title-cell">
+                                    <span class="priority-badge ${cls}" title="{{ _('issue.priority') }}: ${escapeHtml(pr)}">${escapeHtml(letter)}</span>
+                                    <span class="title-truncate">${escapeHtml(text)}</span>
+                                </div>
+                            `;
+                        }
+                    },
+                    { data: 'state', visible: false },
+                    { data: 'component', visible: false },
+                    { data: 'assignee' },
+                    { 
+                        data: 'scope', 
+                        visible: false,
+                        render: function (data, type, row) {
+                            if (type === 'sort' || type === 'type')
+                                return parseInt(row.scope_value);
+                            return data;
+                        }
+                    },
+                    { 
+                        data: 'spent_time', 
+                        render: function (data, type, row) {
+                            if (type === 'sort' || type === 'type')
+                                return parseInt(row.spent_time_value);
+                            return data;
+                        }
+                    },
+                    { 
+                        data: 'increased_total', 
+                        render: function (data, type, row) {
+                            if (type === 'sort' || type === 'type')
+                                return parseInt(row.increased_total);
+                            return data;
+                        }
+                    }
+                ],
+                order: [[7, 'desc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                stateSave: true
+            });
+
+            const tbody = document.querySelector('#tasks-table tbody');
+            tbody.addEventListener('click', function (e) {
+                if (e.target.closest('a')) return;
+                const tr = e.target.closest('tr');
+                if (!tr) return;
+
+                const row = table.row(tr);
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    tr.classList.remove('shown');
+                } else {
+                    row.child(formatChild(row.data())).show();
+                    tr.classList.add('shown');
+                }
+            });
+        });
+    {% endif %}
+</script>
+{% endblock %}

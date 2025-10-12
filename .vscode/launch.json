@@ -8,8 +8,40 @@
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
-            "module": "main",
-            "args": ["-c", "your.conf"]
+            "module": "app.main"
+        },
+        {
+            "name": "FastAPI: Dev",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastapi",
+            "args": [
+                "dev",
+                "app/main.py"
+            ]
+        },
+        {
+            "name": "FastAPI: Production",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastapi",
+            "args": [
+                "run",
+                "app/main.py"
+            ]
+        },
+        {
+            "name": "uvicorn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+                "--reload",
+                "--port",
+                "8000"
+            ],
+            "jinja": true
         }
     ]
 }

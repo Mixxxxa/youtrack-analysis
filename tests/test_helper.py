@@ -1,12 +1,26 @@
-from youtrack import YouTrackConfig, ApiHelper
+# Copyright 2025 Mikhail Gelvikh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from youtrack.helper import YouTrackHelper
 import pytest
 
 
 @pytest.fixture
-def config_for_url_test():
-    return YouTrackConfig(host='my-yt.myjetbrains.com',
-                          api_key='',
-                          support_person='')
+def helper_auth_data():
+    return dict(instance_url='my-yt.myjetbrains.com', api_key='Bearer perm:xxxxxxxxxxxxxxxxxxxxxxxx')
 
 
 @pytest.mark.parametrize(
@@ -21,6 +35,6 @@ def config_for_url_test():
                       (None, 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current'), # Just agile board without issue id
                       ] 
 )
-def test_parse_issue_id_from_request(config_for_url_test: YouTrackConfig, req: str, expected: str | None):
-    a = ApiHelper(config_for_url_test)
+def test_parse_issue_id_from_request(helper_auth_data: dict[str,str], req: str, expected: str | None):
+    a = YouTrackHelper(**helper_auth_data)
     assert a.extract_issue_id(req) == expected

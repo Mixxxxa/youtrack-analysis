@@ -1,0 +1,50 @@
+{# 
+Copyright 2025 Mikhail Gelvikh
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+{% extends "base.html.jinja" %}
+
+{% block head %}
+    {{ super() }}
+    <title>{{ _('errors.500.title') }}</title>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <div class="text-center py-5">
+            <div class="display-1 fw-bold">500</div>
+            <p class="lead mt-3">{{ _('errors.500.lead') }}</p>
+            <p class="text-muted mb-4">{{ _('errors.500.hint')|format(support_person=support_person) }}</p>
+
+            <div class="d-flex justify-content-center flex-wrap gap-2">
+                <button class="btn btn-custom" type="button" onclick="location.reload()">
+                    {{ _('errors.500.reload') }}
+                </button>
+                <a class="btn btn-custom" href="{{ get_link_for_lang('/', settings.lang_code) }}">
+                    {{ _('base.menu.home_entry') }}
+                </a>
+                <a class="btn btn-custom" href="{{ get_link_for_lang('/timeline', settings.lang_code) }}">
+                    {{ _('home.mode_selector.timeline.title') }}
+                </a>
+                <a class="btn btn-custom" href="{{ get_link_for_lang('/batch', settings.lang_code) }}">
+                    {{ _('home.mode_selector.batch.title') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

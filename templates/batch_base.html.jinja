@@ -1,0 +1,477 @@
+{# 
+Copyright 2025 Mikhail Gelvikh
+SPDX-License-Identifier: Apache-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+{% extends "base.html.jinja" %}
+
+{% block head %}
+{{ super() }}
+<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.4/b-3.2.5/b-colvis-3.2.5/b-html5-3.2.5/fh-4.0.4/datatables.min.css" rel="stylesheet" integrity="sha384-TojONN9585hgAyxYF9j147UI4VUzD/AiMVWXy1ktHK25Ir45OTFFEH/Hsz6uXZbJ" crossorigin="anonymous">
+
+<style>
+    /* Левая колонка-меню */
+    .batch-sidebar .list-group-item.active {
+        background-color: var(--btn-bg);
+        border-color: var(--btn-bg);
+    }
+
+    /* Кликабельные строки таблицы для раскрытия */
+    #tasks-table tbody tr { cursor: pointer; }
+    #tasks-table tbody tr.shown td { border-bottom: none; }
+
+    .dt-child-content { padding: 0.75rem 1rem; }
+
+    .filters-row .form-label { font-weight: 500; }
+
+    /* Компоненты — dropdown с мультиселектом, поиском и быстрыми действиями */
+    .components-dropdown .dropdown-menu {
+        width: 100%;
+        padding: 0;
+        overflow: visible; /* не режем содержимое, скроллим только список */
+    }
+    .components-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: var(--sidebar-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: .5rem;
+    }
+    [data-bs-theme="light"] .components-toolbar { background-color: #fff; }
+    [data-bs-theme="dark"] .components-toolbar { background-color: #343a40; }
+
+    .components-toolbar .btn {
+        --bs-btn-padding-y: .2rem;
+        --bs-btn-padding-x: .5rem;
+        --bs-btn-font-size: .85rem;
+    }
+
+    .components-list {
+        overflow: auto;
+        max-height: min(60vh, 420px);
+        padding: .5rem;
+    }
+
+    /* Аккуратная вёрстка form-check без серых подложек, с центровкой по вертикали */
+    .components-list .component-item { margin: .125rem 0; }
+    .components-list .form-check {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin: 0;
+        padding: .25rem;
+        border-radius: .25rem;
+    }
+    .components-list .form-check-input {
+        margin: 0; /* убираем сдвиг Bootstrap для чекбоксов */
+        position: static;
+    }
+    .components-list .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        margin: 0; /* выравниваем линию текста */
+    }
+    .components-list .form-check:hover,
+    .components-list .form-check:active {
+        background: transparent;
+    }
+
+    /* Разделитель между особыми и обычными компонентами */
+    .components-divider {
+        height: 1px;
+        background-color: var(--bs-border-color);
+        margin: .25rem 0 .5rem;
+    }
+
+    /* Кнопка открытия — многоточие при переполнении */
+    .components-toggle {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    /* Когда в проекте нет компонентов — визуально блокируем список */
+    .components-list.is-disabled {
+        opacity: .6;
+        pointer-events: none; /* на всякий случай */
+    }
+
+    /* Сетка формы: на md и шире — 12 колонок: 3 + 5 + 2 + 2 */
+    @media (min-width: 768px) {
+        .col-md-3-fixed { flex: 0 0 auto; width: 25%; }
+        .col-md-5-fixed { flex: 0 0 auto; width: 41.66666667%; }
+        .col-md-2-fixed { flex: 0 0 auto; width: 16.66666667%; }
+    }
+
+    /* Для этой страницы растягиваем контейнер на всю ширину */
+    .container.mt-4 { max-width: 90%; }
+
+    /* Ячейка с названием: бейдж + усечение текста */
+    #tasks-table td.col-title .title-cell {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+    #tasks-table td.col-title .title-truncate {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Квадратный бейдж приоритета 16px */
+    .priority-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        font-size: 12px;
+        line-height: 1;
+        vertical-align: middle;
+        user-select: none;
+    }
+
+    /* Цвета по темам и приоритетам */
+    [data-bs-theme="dark"] .pri-blocker { background-color: #db5c5c; color: #fff; }
+    [data-bs-theme="dark"] .pri-critical { background-color: #e08855; color: #212529; }
+    [data-bs-theme="dark"] .pri-major   { background-color: #f2c55c; color: #212529; }
+    [data-bs-theme="dark"] .pri-normal  { background-color: #89cc8e; color: #212529; }
+    [data-bs-theme="dark"] .pri-minor   { background-color: #5a5d63; color: #fff; }
+
+    [data-bs-theme="light"] .pri-blocker { background-color: #db3b4b; color: #fff; }
+    [data-bs-theme="light"] .pri-critical { background-color: #e56d17; color: #212529; }
+    [data-bs-theme="light"] .pri-major   { background-color: #ffaf0f; color: #212529; }
+    [data-bs-theme="light"] .pri-normal  { background-color: #89c398; color: #212529; }
+    [data-bs-theme="light"] .pri-minor   { background-color: #f7f8fa; color: #212529; }
+</style>
+{% endblock %}
+
+{% block navbargadget %}
+<span class="navbar-brand ms-2">{{ _('batch.title') }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12 col-lg-3 col-xl-2">
+        <div class="batch-sidebar">
+            <div class="list-group">
+                <a href="{{get_link_for_lang('/batch/scope-overrun', settings.lang_code)}}" class="list-group-item list-group-item-action {{'active' if batch_sub_mode=='scope-overrun'}}">
+                    {{ _('batch.mode.scope_overrun.name') }}
+                </a>
+                <a href="{{get_link_for_lang('/batch/scope-increase', settings.lang_code)}}" class="list-group-item list-group-item-action {{'active' if batch_sub_mode=='scope-increase'}}">
+                     {{ _('batch.mode.scope_increase.name') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9 col-xl-10">
+        {% if is_error %}
+            {{ alert_block(error_text, 'danger')}}
+        {% endif %}
+
+        {% block batch_content %}{% endblock %}
+        {% block batch_footer %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block additionalscripts %}
+{{ super() }}
+<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.4/b-3.2.5/b-colvis-3.2.5/b-html5-3.2.5/fh-4.0.4/datatables.min.js" integrity="sha384-YDh3EJgFnoSs9DRXAxadqIv1JhRyHwsY58kzgNUAkDh1KgeECx4qS733KpWBDCkd" crossorigin="anonymous"></script>
+<script src="/static/luxon.min.js"></script>
+
+<script>
+    function showFormAlert(message, type = 'warning') {
+        const container = document.getElementById('form-alert');
+        container.classList.remove('d-none');
+        container.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+
+    function parseDateIso(str) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(str) ? str : null;
+    }
+
+    function validateDateRange(from, to) {
+        if (!from || !to) return false;
+        return to >= from; // корректно для ISO-дат
+    }
+
+    // Данные окружения
+    const projectsData = {{ projects | tojson }};
+    const current_lang = '{{ settings.lang_code }}';
+
+    // Placeholder для "особых" компонентов
+    const SPECIAL_COMPONENTS = []; // Например: ['Empty', 'DevRel']
+
+    // DOM-ссылки
+    const projectSelect = document.getElementById('project-select');
+    const componentMenu = document.getElementById('component-menu');
+    const componentsSpecial = document.getElementById('components-special');
+    const componentsRegular = document.getElementById('components-regular');
+    const componentsDivider = document.getElementById('components-divider');
+    const componentSearch = document.getElementById('component-search');
+    const btnSelectAll = document.getElementById('components-select-all');
+    const btnClearAll = document.getElementById('components-clear-all');
+    const dateFromEl = document.getElementById('date-from');
+    const dateToEl = document.getElementById('date-to');
+
+    // Индексы проектов
+    const byShortName = new Map(projectsData.map(p => [p.short_name, p]));
+    const firstProjectShort = projectsData.length ? projectsData[0].short_name : null;
+
+    function normalizeList(list) {
+        return Array.from(new Set((list || []).map(v => String(v))));
+    }
+
+    function renderComponentsMenu(projectShortName, preselected = []) {
+        let compIdSeq = 0;
+        
+        const componentToHtml = function(value){
+            const vEsc = escapeHtml(value);
+            compIdSeq += 1;
+            const inputId = 'comp-' + compIdSeq;
+            return `
+                <div class="component-item">
+                    <div class="form-check">
+                        <input class="form-check-input component-check" type="checkbox" id="${inputId}" name="components" value="${vEsc}">
+                        <label class="form-check-label" for="${inputId}">${vEsc}</label>
+                    </div>
+                </div>
+            `;
+        };
+        
+        const project = byShortName.get(projectShortName);
+        const special = normalizeList(SPECIAL_COMPONENTS);
+        const comps = normalizeList(project?.components || []);
+
+        // Рендерим элементы
+        componentsSpecial.innerHTML = special.map(componentToHtml).join('');
+        componentsRegular.innerHTML = comps.map(componentToHtml).join('');
+
+        // Нужен ли разделитель?
+        componentsDivider.classList.toggle('d-none', !(special.length && comps.length));
+
+        // Есть ли вообще что показывать?
+        const hasAny = (special.length + comps.length) > 0;
+
+        // Пустой стейт списка: сообщение вместо чекбоксов
+        if (!hasAny) {
+            componentsSpecial.innerHTML = '';
+            componentsRegular.innerHTML = '<div class="text-body-secondary small px-2 py-2">{{ _("batch.scope_overrun.search.selected_components.empty_text") }}</div>';
+        }
+
+        // Блокируем/разблокируем тулбар и список
+        componentSearch.disabled = !hasAny;
+        btnSelectAll.disabled = !hasAny;
+        btnClearAll.disabled = !hasAny;
+        document.getElementById('components-list').classList.toggle('is-disabled', !hasAny);
+
+        // Проставить выбранные (если есть что выбирать)
+        if (hasAny && preselected && preselected.length) {
+            const set = new Set(preselected);
+            componentMenu.querySelectorAll('.component-check').forEach(ch => {
+                ch.checked = set.has(ch.value);
+            });
+        }
+
+        // Сброс поиска и фильтр (безопасно при пустом стейте — компонентных элементов нет)
+        componentSearch.value = '';
+        filterComponents('');
+
+        updateComponentButtonLabel();
+    }
+
+    function filterComponents(query) {
+        const q = (query || '').toLowerCase().trim();
+        let visSpec = 0, visReg = 0;
+
+        componentsSpecial.querySelectorAll('.component-item').forEach(el => {
+            const txt = el.querySelector('.form-check-label')?.textContent.toLowerCase() || '';
+            const match = !q || txt.includes(q);
+            el.classList.toggle('d-none', !match);
+            if (match) visSpec++;
+        });
+        componentsRegular.querySelectorAll('.component-item').forEach(el => {
+            const txt = el.querySelector('.form-check-label')?.textContent.toLowerCase() || '';
+            const match = !q || txt.includes(q);
+            el.classList.toggle('d-none', !match);
+            if (match) visReg++;
+        });
+
+        componentsDivider.classList.toggle('d-none', !(visSpec > 0 && visReg > 0));
+    }
+
+    function getSelectedComponents() {
+        return Array.from(componentMenu.querySelectorAll('.component-check:checked')).map(ch => ch.value);
+    }
+
+    function setSelectedComponents(values) {
+        const set = new Set(values.map(String));
+        componentMenu.querySelectorAll('.component-check').forEach(ch => {
+            ch.checked = set.has(ch.value);
+        });
+        updateComponentButtonLabel();
+    }
+
+    function updateComponentButtonLabel() {
+        const btn = document.getElementById('component-dropdown-btn');
+        const selected = getSelectedComponents();
+        if (selected.length === 0) {
+            btn.textContent = '{{ _("batch.scope_overrun.search.selected_components.placeholder") }}';
+        } else if (selected.length <= 3) {
+            btn.textContent = selected.join(', ');
+        } else {
+            btn.textContent = `{{ _("batch.scope_overrun.search.selected_components.selected_text_prefix") }}: ${selected.length}`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const current_lang = '{{ settings.lang_code }}';
+        
+        // Заполнить проекты
+        for (const p of projectsData) {
+            const opt = document.createElement('option');
+            opt.value = p.short_name; // используем short_name в URL
+            opt.textContent = `${p.short_name} — ${p.name}`;
+            projectSelect.appendChild(opt);
+        }
+        if (firstProjectShort) projectSelect.value = firstProjectShort;
+
+        // Рендер компонентов для выбранного проекта
+        renderComponentsMenu(projectSelect.value);
+
+        // Смена проекта -> перерисовать список компонентов
+        projectSelect.addEventListener('change', () => {
+            renderComponentsMenu(projectSelect.value);
+        });
+
+        // Поиск по компонентам
+        componentSearch.addEventListener('input', (e) => {
+            filterComponents(e.target.value);
+        });
+
+        // Быстрые действия — по текущей фильтрации (только видимые)
+        btnSelectAll.addEventListener('click', () => {
+            componentMenu.querySelectorAll('.component-item:not(.d-none) .component-check').forEach(ch => ch.checked = true);
+            updateComponentButtonLabel();
+        });
+        btnClearAll.addEventListener('click', () => {
+            componentMenu.querySelectorAll('.component-item:not(.d-none) .component-check').forEach(ch => ch.checked = false);
+            updateComponentButtonLabel();
+        });
+
+        // Обновление лейбла при кликах
+        componentMenu.addEventListener('change', (e) => {
+            if (e.target.classList.contains('component-check')) {
+                updateComponentButtonLabel();
+            }
+        });
+
+        // Пресеты дат
+        document.querySelectorAll('.preset-item').forEach(el => {
+            el.addEventListener('click', function (e) {
+                e.preventDefault();
+                const from = this.getAttribute('data-from');
+                const to = this.getAttribute('data-to');
+                if (from) dateFromEl.value = from;
+                if (to) dateToEl.value = to;
+            });
+        });
+
+        // Подстановка из URL
+        (function applyParamsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const hasAny = ['project', 'component', 'begin', 'end'].some(k => params.has(k));
+            if (!hasAny) return;
+
+            // Проект
+            const projectParam = params.get('project');
+            let selectedProject = firstProjectShort;
+            if (projectParam && byShortName.has(projectParam)) {
+                selectedProject = projectParam;
+            }
+            projectSelect.value = selectedProject;
+
+            // Компоненты под выбранный проект
+            renderComponentsMenu(selectedProject);
+            
+            // Компоненты
+            const raw = params.getAll('component').map(s => s.trim()).filter(Boolean);
+            if (raw.length) {
+                const project = byShortName.get(selectedProject);
+                const allowed = new Set([
+                    ...normalizeList(SPECIAL_COMPONENTS),
+                    ...normalizeList(project?.components || [])
+                ]);
+                const valid = raw.filter(v => allowed.has(v));
+                if (valid.length !== 0) {
+                    setSelectedComponents(valid);
+                }
+            }
+
+            // Даты
+            const b = parseDateIso(params.get('begin') || '');
+            const e = parseDateIso(params.get('end') || '');
+            if (b && e && validateDateRange(b, e)) {
+                dateFromEl.value = b;
+                dateToEl.value = e;
+            }
+        })();
+
+        // Кнопка "Перейти к анализу"
+        document.getElementById('analyze-btn').addEventListener('click', function () {
+            const projectId = projectSelect.value;
+            const components = getSelectedComponents();
+            const from = dateFromEl.value;
+            const to = dateToEl.value;
+
+            // Валидация
+            if (!projectId) {
+                showFormAlert('{{ _("batch.search.error.choose_project") }}', 'warning');
+                return;
+            }
+            if (components.length === 0) {
+                showFormAlert('{{ _("batch.search.error.choose_component") }}', 'warning');
+                return;
+            }
+            if (!from || !to) {
+                showFormAlert('{{ _("batch.search.error.choose_both_dates") }}', 'warning');
+                return;
+            }
+            if (!validateDateRange(from, to)) {
+                showFormAlert('{{ _("batch.search.error.date_begin_should_be_less_than_end") }}', 'warning');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set('project', projectId);
+            components.forEach(c => params.append('component', c));
+            params.set('begin', from);
+            params.set('end', to);
+
+            window.location.href = `${window.location.pathname}?${params.toString()}`;
+        });
+    });
+</script>
+{% endblock %}

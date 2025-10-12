@@ -1,7 +1,23 @@
+# Copyright 2025 Mikhail Gelvikh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from .entities import *
-from .utils import yt_logger, is_empty
+from .utils import yt_logger
+from .utils.others import is_empty
 from .utils.exceptions import ParsingError
-from .config import CustomFields, CustomField
 from .utils.problems import ProblemHolder, ProblemKind
 from math import fabs
 from contextlib import contextmanager
@@ -167,28 +183,28 @@ class IssueParser:
         component: str | None = None
         project: Project | None = None
         
+        project = Project(short_name=issue_info['project']['shortName'],
+                          name=issue_info['project']['name'],
+                          id=issue_info['project']['id'])
+
         for i in issue_info['customFields']:
             name, value = i['name'], i['value']
             field = CustomField(id=i['id'], name=name)
             
-            if field == self.__custom_fields.state:
+            if not state and field == self.__custom_fields.state:
                 state = IssueState.parse(value['name'])
-            elif field == self.__custom_fields.assignee and value is not None:
+            elif not current_assignee and field == self.__custom_fields.assignee:
                 current_assignee = value['fullName']
-            elif field == self.__custom_fields.scope:
+            elif not scope and field == self.__custom_fields.scope:
                 if value is not None:
                     scope = Duration.from_minutes(int(value['minutes']))
                 else:
                     # Scope должен быть, но иногда не отдаётся API
                     self.__write_yt_error(ProblemKind.NullScope, 'API has returned NULL Scope')
-            elif field == self.__custom_fields.spent_time and value is not None:
+            elif not spent_time and field == self.__custom_fields.spent_time and value is not None:
                 spent_time = Duration.from_minutes(int(value['minutes']))
-            elif field == self.__custom_fields.component:
+            elif not component and field == self.__custom_fields.component:
                 component = value['name']
-
-        if 'project' in issue_info:
-            project = Project(short_name=issue_info['project']['shortName'],
-                              name=issue_info['project']['name'])
 
         for i in issue_info['tags']:
             tags.append(Tag(name=i['name'], 

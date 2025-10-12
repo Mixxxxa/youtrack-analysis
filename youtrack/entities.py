@@ -1,7 +1,29 @@
-from datetime import timedelta
+# Copyright 2025 Mikhail Gelvikh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from datetime import timedelta, date
 from dataclasses import dataclass
 from functools import cached_property
-from .utils import Timestamp, Duration, count_working_minutes, is_empty
+
+from pydantic import BaseModel
+
+from .utils.timestamp import Timestamp
+from .utils.duration import Duration
+from .utils.others import is_empty
+from .utils.timeutils import count_working_minutes
 from .utils.problems import ProblemHolder
 from .utils.issue_state import IssueState
 
@@ -9,10 +31,64 @@ from .utils.issue_state import IssueState
 UNASSIGNED_NAME = 'Unassigned'
 
 
+class CustomField(BaseModel):
+    id: str
+    name: str
+
+    def __eq__(self, other):
+        """Compare without ID
+        TODO Подумать, нужен ли вообще ID
+        """
+        if isinstance(other, CustomField):
+            return self.name == other.name
+        return NotImplemented
+    
+
+class CustomFields(BaseModel):
+    state: CustomField
+    assignee: CustomField
+    scope: CustomField
+    spent_time: CustomField
+    component: CustomField
+    versions: CustomField
+
+    @staticmethod
+    def default_config() -> 'CustomFields':
+        return CustomFields(
+            state=CustomField(id='110-33', name='State'),
+            assignee=CustomField(id='111-7', name='Assignee'),
+            scope=CustomField(id='116-7', name='Scope'),
+            spent_time=CustomField(id='116-6', name='Spent time'),
+            component=CustomField(id='110-32', name='Component'),
+            versions=CustomField(id='110-32', name='Release cycle')
+        )
+    
+
+@dataclass
+class Version:
+    name: str
+    begin: Timestamp
+    end: Timestamp
+
+
 @dataclass
 class Project:
     short_name: str
     name: str
+    id: str
+
+
+@dataclass
+class ProjectExt(Project):
+    components: list[str]
+
+    def to_dict(self) -> dict[str,str|list[str]]:
+        return {
+            'short_name': self.short_name,
+            'name': self.name,
+            'id': self.id,
+            'components': self.components
+        }
 
 
 @dataclass

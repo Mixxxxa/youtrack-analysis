@@ -1,24 +1,44 @@
+# Copyright 2025 Mikhail Gelvikh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from dataclasses import dataclass
 from .timestamp import Timestamp
 from .duration import Duration
-from flask_babel import _
 from youtrack.utils.parser_context import ParserContext
 from youtrack.entities import IssueInfo, WorkItem, IssueState
 import logging
+from abc import ABC, abstractmethod
 
 
 anomaly_logger = logging.getLogger("youtrack-anomalies")
 
 
 @dataclass
-class Anomaly:
+class Anomaly(ABC):
     timestamp: Timestamp
     responsible: str 
+
+    @abstractmethod
+    def to_string(self, _) -> str:
+        pass
 
 
 @dataclass
 class OverdueAnomaly(Anomaly):
-    def __str__(self):
+    def to_string(self, _) -> str:
         return _('anomaly.overdue')
 
 
@@ -28,12 +48,12 @@ class TooLongReviewAnomaly(Anomaly):
     expected_time: Duration
     actual_time: Duration
 
-    def __str__(self):
+    def to_string(self, _) -> str:
         if self.fragmented:
-            return _('anomaly.fragmented_too_long_review',
-                 actual_time=self.actual_time.format_yt(),
-                 expected_time=self.expected_time.format_yt())
-        return _('anomaly.too_long_review', 
+            return _('anomaly.fragmented_too_long_review') % dict(
+                actual_time=self.actual_time.format_yt(),
+                expected_time=self.expected_time.format_yt())
+        return _('anomaly.too_long_review') % dict( 
                  actual_time=self.actual_time.format_yt(),
                  expected_time=self.expected_time.format_yt())
 
@@ -43,8 +63,8 @@ class ScopeOverrunAnomaly(Anomaly):
     scope: Duration
     spent_time: Duration
 
-    def __str__(self):
-        return _('anomaly.scope_overrun', 
+    def to_string(self, _) -> str:
+        return _('anomaly.scope_overrun') % dict( 
                  scope=self.scope.format_yt(), 
                  spent_time=self.spent_time.format_yt())
     
@@ -54,17 +74,18 @@ class ScopeIncreasedAnomaly(Anomaly):
     before: Duration
     after: Duration
 
-    def __str__(self):
-        return _('anomaly.scope_increased', 
+    def to_string(self, _) -> str:
+        return _('anomaly.scope_increased') % dict(
                  before=self.before.format_yt(), 
-                 after=self.after.format_yt())
+                 after=self.after.format_yt(),
+                 author=self.responsible)
     
 
-
-
+@dataclass
+class ReopenAnomaly(Anomaly):
+    def to_string(self, _) -> str:
+        return _('anomaly.reopen')
     
-#Ideas:
-# Time added manually
 
 class AnomaliesDetector:
 
