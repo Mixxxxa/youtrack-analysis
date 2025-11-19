@@ -1,4 +1,4 @@
-{# 
+{#
 Copyright 2025 Mikhail Gelvikh
 SPDX-License-Identifier: Apache-2.0
 
@@ -19,7 +19,7 @@ limitations under the License.
 
 {% block head %}
 {{ super() }}
-<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.4/b-3.2.5/b-colvis-3.2.5/b-html5-3.2.5/fh-4.0.4/datatables.min.css" rel="stylesheet" integrity="sha384-TojONN9585hgAyxYF9j147UI4VUzD/AiMVWXy1ktHK25Ir45OTFFEH/Hsz6uXZbJ" crossorigin="anonymous">
+<link rel="stylesheet" href="/static/css/datatables.min.css">
 
 <style>
     /* Левая колонка-меню */
@@ -193,8 +193,8 @@ limitations under the License.
 
 {% block additionalscripts %}
 {{ super() }}
-<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.4/b-3.2.5/b-colvis-3.2.5/b-html5-3.2.5/fh-4.0.4/datatables.min.js" integrity="sha384-YDh3EJgFnoSs9DRXAxadqIv1JhRyHwsY58kzgNUAkDh1KgeECx4qS733KpWBDCkd" crossorigin="anonymous"></script>
-<script src="/static/luxon.min.js"></script>
+<script src="/static/js/luxon.min.js"></script>
+<script src="/static/js/datatables.min.js"></script>
 
 <script>
     function showFormAlert(message, type = 'warning') {
@@ -246,7 +246,7 @@ limitations under the License.
 
     function renderComponentsMenu(projectShortName, preselected = []) {
         let compIdSeq = 0;
-        
+
         const componentToHtml = function(value){
             const vEsc = escapeHtml(value);
             compIdSeq += 1;
@@ -260,7 +260,7 @@ limitations under the License.
                 </div>
             `;
         };
-        
+
         const project = byShortName.get(projectShortName);
         const special = normalizeList(SPECIAL_COMPONENTS);
         const comps = normalizeList(project?.components || []);
@@ -348,7 +348,7 @@ limitations under the License.
 
     document.addEventListener('DOMContentLoaded', function () {
         const current_lang = '{{ settings.lang_code }}';
-        
+
         // Заполнить проекты
         for (const p of projectsData) {
             const opt = document.createElement('option');
@@ -415,7 +415,7 @@ limitations under the License.
 
             // Компоненты под выбранный проект
             renderComponentsMenu(selectedProject);
-            
+
             // Компоненты
             const raw = params.getAll('component').map(s => s.trim()).filter(Boolean);
             if (raw.length) {

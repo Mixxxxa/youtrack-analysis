@@ -41,9 +41,13 @@ def count_working_minutes(begin: dt.datetime, end: dt.datetime) -> int:
     # Because date_range will create at least one element even if begin and end are equal
     if begin == end:
         return 0
-    
-    time_index: pd.Timestamp = pd.date_range(start=pd.to_datetime(begin), 
-                                             end=pd.to_datetime(end), 
+
+    time_index: pd.Timestamp = pd.date_range(start=pd.to_datetime(begin),
+                                             end=pd.to_datetime(end),
                                              freq='min',
                                              inclusive='left')
     return sum([is_working_hour(dt) for dt in time_index])
+
+
+def is_next_day(current: dt.date, next: dt.date):
+    return current + dt.timedelta(days=1) == next

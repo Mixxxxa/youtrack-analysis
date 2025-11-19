@@ -4,6 +4,7 @@ fastapi[standard-no-fastapi-cloud-cli]
 pydantic-settings == 2.11.0
 itsdangerous == 2.2.0 #for starlette-sessions
 pytest
+pytest-asyncio
 pandas == 2.3.3
 numpy == 2.2.4
 plotly == 6.3.1

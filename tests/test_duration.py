@@ -43,22 +43,23 @@ def test_format():
 
     with pytest.raises(RuntimeError):
         str(value)
-    #assert value.format_business() == '3 дня 1 час 1 минута'
-    #assert value.format_natural() == natural_format
-    #assert value.format_hours() == '25 часов 1 минута'
+    # assert value.format_business() == '3 дня 1 час 1 минута'
+    # assert value.format_natural() == natural_format
+    # assert value.format_hours() == '25 часов 1 минута'
+
 
 def test_compare():
     v500 = Duration.from_minutes(500)
     v500d = datetime.timedelta(minutes=500)
     v501 = Duration.from_minutes(501)
     v501d = datetime.timedelta(minutes=501)
-    
+
     assert v500 == v500
     assert v500 == v500d
 
     assert v500 != v501
     assert v500 != v501d
-    
+
     assert v500 < v501
     assert v500 < v501d
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from datetime import timedelta, date
+from datetime import timedelta
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -42,7 +42,7 @@ class CustomField(BaseModel):
         if isinstance(other, CustomField):
             return self.name == other.name
         return NotImplemented
-    
+
 
 class CustomFields(BaseModel):
     state: CustomField
@@ -62,7 +62,7 @@ class CustomFields(BaseModel):
             component=CustomField(id='110-32', name='Component'),
             versions=CustomField(id='110-32', name='Release cycle')
         )
-    
+
 
 @dataclass
 class Version:
@@ -82,7 +82,7 @@ class Project:
 class ProjectExt(Project):
     components: list[str]
 
-    def to_dict(self) -> dict[str,str|list[str]]:
+    def to_dict(self) -> dict[str, str|list[str]]:
         return {
             'short_name': self.short_name,
             'name': self.name,
@@ -108,7 +108,7 @@ class Event:
         if isinstance(other, Timestamp):
             return self.timestamp < other
         return NotImplemented
-    
+
 
 @dataclass
 class Comment(Event):
@@ -136,10 +136,10 @@ class WorkItem(Event):
         """Возвращает Timestamp окончания работы
         """
         return self.timestamp + self.duration
-        
+
     def __str__(self):
         return f"{self.name} - {self.state} - {self.duration.format_yt()}"
-    
+
     @cached_property
     def business_duration(self) -> Duration:
         """Возвращает сколько из общего Duration пришлось на рабочее время
@@ -178,18 +178,17 @@ class IssueInfo(ShortIssueInfo):
     @property
     def resolution_time(self) -> Duration | None:
         """Время решения задачи (от создания до закрытия)"""
-        #assert self.resolve_datetime is not None and self.creation_datetime is not None
         if not self.is_finished or self.creation_datetime is None:
             return None
         return self.resolve_datetime - self.creation_datetime
-    
+
     @property
     def reaction_time(self) -> Duration | None:
         """Время реакции на задачу (от создания до взятия в работу)"""
         if self.started_datetime is None or self.creation_datetime is None:
             return None
         return self.started_datetime - self.creation_datetime
-    
+
     @property
     def spent_time_real(self) -> Duration:
         """Время работы по work item'ам в текущей задаче"""
@@ -202,12 +201,12 @@ class IssueInfo(ShortIssueInfo):
     def spent_time(self) -> Duration:
         """Общее время работы (Spend Time)"""
         # За основу берём реальный spent_time в задаче
-        total = self.spent_time_real        
+        total = self.spent_time_real
         # И добавляем к нему значения из подзадач
         for i in self.subtasks:
             total = total + i.spent_time_yt
         return total
-    
+
     @property
     def scope_overrun(self) -> str | None:
         if self.scope is None:
@@ -218,10 +217,10 @@ class IssueInfo(ShortIssueInfo):
         overrun = scope.total_seconds() - spent_time.total_seconds()
         if overrun >= 0:
             return 'Нет'
-                
+
         as_percent = float(abs(overrun)) / scope.total_seconds() * 100
         return f"{Duration(timedelta(seconds=abs(overrun))).format_yt()} (+{as_percent:.0f}%)"
-    
+
     @property
     def is_started(self) -> bool:
         return self.reaction_time is not None
@@ -229,7 +228,7 @@ class IssueInfo(ShortIssueInfo):
     @property
     def is_finished(self) -> bool:
         return self.resolve_datetime is not None
-    
+
     def get_activities_range(self) -> tuple[Timestamp, Timestamp|None]:
         """Возвращает диапазон дат между началом первой и концом последней активности"""
         min = self.creation_datetime
@@ -241,7 +240,7 @@ class IssueInfo(ShortIssueInfo):
             if first_timestamp < min:
                 min = first_timestamp
 
-        # Кто-нибудь может создать workitem с не самым последним timestamp, 
+        # Кто-нибудь может создать workitem с не самым последним timestamp,
         # но более длительным временем работы
         # TODO подумать над оптимизацией
         for i in self.work_items:
@@ -251,7 +250,7 @@ class IssueInfo(ShortIssueInfo):
             elif end > max:
                 max = end
 
-        return min,max
+        return min, max
 
 
 def get_issue_spent_time(item: ShortIssueInfo) -> Duration:

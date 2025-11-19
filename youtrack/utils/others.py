@@ -15,7 +15,7 @@
 
 
 import re
-from urllib.parse import urlparse,parse_qs
+from urllib.parse import urlparse, parse_qs
 
 
 # def format_plural(amount: int, variants: list[str]) -> str:
@@ -36,13 +36,13 @@ def is_empty(container) -> bool:
 
 
 def str_to_bool(text: str|int) -> bool:
-    return isinstance(text, (str,int)) and str(text).strip().lower() in ['true', '1']
+    return isinstance(text, (str, int)) and str(text).strip().lower() in ['true', '1']
 
 
 def is_valid_issue_id(id: str) -> bool:
     issue_re = re.compile(r'^[a-z]+?-[0-9]+?$')
     return issue_re.match(id)
-    
+
 
 def extract_issue_id_from_url(url: str, host: str) -> str | None:
     try:
@@ -53,22 +53,22 @@ def extract_issue_id_from_url(url: str, host: str) -> str | None:
             return None
         if parts.path is None or is_empty(parts.path):
             return None
-        
+
         if parts.path.startswith('/youtrack/agiles/') and not is_empty(parts.query):
             query_parts = parse_qs(qs=parts.query)
             if 'issue' in query_parts and is_valid_issue_id(query_parts['issue'][0]):
                 return query_parts['issue'][0]
-            
+
         if parts.path.startswith('/youtrack/issue/'):
             path_parts = [s for s in str.split(parts.path, sep='/') if not is_empty(s.strip())]
             if len(path_parts) > 2 and is_valid_issue_id(path_parts[2]):
                 return path_parts[2]
-            
+
         if parts.path.startswith('/issue/'):
             path_parts = [s for s in str.split(parts.path, sep='/') if not is_empty(s.strip())]
             if len(path_parts) > 1 and is_valid_issue_id(path_parts[1]):
                 return path_parts[1]
-    except:
+    except:  # TODO Check exact exception
         pass
     return None
 
@@ -76,7 +76,7 @@ def extract_issue_id_from_url(url: str, host: str) -> str | None:
 def issue_id_comparator(l: str, r: str) -> int:
     l_parts, r_parts = l.lower().split('-'), r.lower().split('-')
     assert len(l_parts) == 2 and len(r_parts) == 2 and l_parts[0].isascii() and r_parts[0].isascii()
-    
+
     if l_parts[0] < r_parts[0]:
         return -1
     elif l_parts[0] > r_parts[0]:
@@ -89,7 +89,7 @@ def issue_id_comparator(l: str, r: str) -> int:
             return 1
         else:
             return 0
-        
+
 
 def issue_id_to_key(id: str) -> tuple[str, int]:
     parts = id.lower().split('-')

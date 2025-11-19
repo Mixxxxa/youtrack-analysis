@@ -3,7 +3,7 @@ from youtrack.utils.others import is_valid_iso8601_date
 
 def host_validator(value: str) -> str:
     if value.startswith('https://') or value.startswith('http://'):
-        raise ValueError(f"Host should contain only host-name (without 'http:// or https://'). Example: 'myhost.myjetbrains.com'")
+        raise ValueError("Host should contain only host-name (without 'http:// or https://'). Example: 'myhost.myjetbrains.com'")
     return value
 
 

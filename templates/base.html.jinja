@@ -1,4 +1,4 @@
-{# 
+{#
 Copyright 2025 Mikhail Gelvikh
 SPDX-License-Identifier: Apache-2.0
 
@@ -22,13 +22,13 @@ limitations under the License.
 {%- endmacro %}
 
 <!doctype html>
-<html lang="ru" data-bs-theme="light"> 
+<html lang="ru" data-bs-theme="light">
 <head>
     {% block head %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-icons.min.css">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <style>
         /* Светлая тема с приглушенными цветами и темная тема */
@@ -279,7 +279,7 @@ limitations under the License.
             {% block content %}{% endblock %}
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
     {% block additionalscripts %}
     <script>
         // Инициализация всех tooltips
@@ -307,6 +307,10 @@ limitations under the License.
 
         function getTimelineUrl(issueId, lang){
             return `${location.origin}/${lang}/timeline?issue=${encodeURIComponent(issueId)}`;
+        }
+
+        function get_datatables_translation(lang_code) {
+            return lang_code === 'ru' ? '/static/datatables-2.3.4-ru.json' : ''
         }
     </script>
     {% endblock %}

@@ -20,5 +20,5 @@ from dataclasses import dataclass, field
 
 @dataclass
 class YouTrackInstanceConfig:
-    projects: dict[str,ProjectExt] = field(default_factory=dict)
+    projects: dict[str, ProjectExt] = field(default_factory=dict)
     versions: list[Version] = field(default_factory=list)

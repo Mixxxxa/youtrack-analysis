@@ -23,7 +23,7 @@ from youtrack.utils.query import SearchQueryBuilder
 from ..settings import Settings
 from .batch_shared import (
     BatchShortIssueInfo,
-    validate_input_params, 
+    validate_input_params,
     validate_dates,
     get_required_issue_fields,
     batch_output_transformer,
@@ -40,10 +40,11 @@ def overrun_transformer(parsed: BatchShortIssueInfo, raw: JSON) -> JSON:
     ret = batch_output_transformer(parsed=parsed, raw=raw)
     scope_overrun = parsed.overrun
     can_calc_percent = parsed.has_timings() and parsed.scope.to_seconds() != 0
+    perc = round((parsed.spent_time.to_seconds() / parsed.scope.to_seconds()) * 100, 2) if can_calc_percent else 0
     ret |= {
         'scope_overrun': scope_overrun.format_yt() if scope_overrun else 'N/A',
         'scope_overrun_value': scope_overrun.to_seconds() if scope_overrun else 0,
-        'scope_overrun_perc_value': round((parsed.spent_time.to_seconds() / parsed.scope.to_seconds()) * 100, 2) if can_calc_percent else 0
+        'scope_overrun_perc_value': perc
     }
     return ret
 
@@ -68,10 +69,10 @@ async def get_batch_scope_overrun_data(translator, settings: Settings, project: 
     # Empty page
     if not project and len(components) == 0 and not begin and not end:
         return dict()
-    
+
     # Input validation
-    validate_input_params(yt_config=settings.yt_config, 
-                          project=project, 
+    validate_input_params(yt_config=settings.yt_config,
+                          project=project,
                           components=components)
     begin_date, end_date = validate_dates(begin=begin, end=end)
 
@@ -83,10 +84,10 @@ async def get_batch_scope_overrun_data(translator, settings: Settings, project: 
                                only_started=True).Build()
     helper = YouTrackHelper(instance_url=settings.app_config.host,
                             api_key=settings.app_config.api_key)
-    data = await helper.get_raw_issues_by_query(query=query, 
+    data = await helper.get_raw_issues_by_query(query=query,
                                                 fields=get_required_issue_fields())
     dataset = {
-        'entries': process_issue_custom_fields(json=data, 
+        'entries': process_issue_custom_fields(json=data,
                                                app_config=settings.app_config,
                                                filter_func=overrun_filter,
                                                output_transformer_func=overrun_transformer),

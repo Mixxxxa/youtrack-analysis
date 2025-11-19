@@ -24,17 +24,17 @@ def helper_auth_data():
 
 
 @pytest.mark.parametrize(
-    'expected, req', [('id-12680', 'https://my-yt.myjetbrains.com/issue/id-12680'), # Short, but valid URL
-                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/issue/id-12680'), # Short URL
-                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/issue/id-12680/Great-big-issue'), # Long URL
-                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current?issue=id-12680'), # From Agile board
-                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current?issue=id-12680&wft=true'), # From Agile board, but with garbage
-                      ('cpp-1010', 'cpp-1010'), # Only id
-                      (None, 'https://my-yt2.myjetbrains.com/youtrack/issue/id-12680'), # Another host
-                      (None, 'http://my-yt.myjetbrains.com/youtrack/issue/id-12680'), # Only https. But why?
-                      (None, 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current'), # Just agile board without issue id
-                      ] 
+    'expected, req', [('id-12680', 'https://my-yt.myjetbrains.com/issue/id-12680'),  # Short, but valid URL
+                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/issue/id-12680'),  # Short URL
+                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/issue/id-12680/Great-big-issue'),  # Long URL
+                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current?issue=id-12680'),  # From Agile board
+                      ('id-12680', 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current?issue=id-12680&wft=true'),  # From Agile board, but with garbage
+                      ('cpp-1010', 'cpp-1010'),  # Only id
+                      (None, 'https://my-yt2.myjetbrains.com/youtrack/issue/id-12680'),  # Another host
+                      (None, 'http://my-yt.myjetbrains.com/youtrack/issue/id-12680'),  # Only https. But why?
+                      (None, 'https://my-yt.myjetbrains.com/youtrack/agiles/120-80/current'),  # Just agile board without issue id
+                      ]
 )
-def test_parse_issue_id_from_request(helper_auth_data: dict[str,str], req: str, expected: str | None):
+def test_parse_issue_id_from_request(helper_auth_data: dict[str, str], req: str, expected: str | None):
     a = YouTrackHelper(**helper_auth_data)
     assert a.extract_issue_id(req) == expected

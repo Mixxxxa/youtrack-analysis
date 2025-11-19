@@ -34,22 +34,22 @@ class LanguageSettings:
         Language(code='en', display_name='English', date_format='dd.MM.yyyy (EEE) HH:mm:ss'),
         Language(code='ru', display_name='Русский', date_format='dd.MM.yyyy (EEE) HH:mm:ss')
     ]
-    
+
     @staticmethod
     def is_supported(lang: str) -> bool:
         for i in LanguageSettings.SUPPORTED_LANGUAGES:
             if i.code == lang:
                 return True
         return False
-    
+
     @staticmethod
     def supported_codes() -> Literal['ru', 'en']:
         return ['en', 'ru']
-    
+
     @staticmethod
     def default_language() -> Literal['en']:
         return 'en'
-    
+
 
 AvailableLanguageT = Literal['ru', 'en']
 
@@ -58,7 +58,7 @@ def convert_accept_language_values(header_text: str) -> list[str]:
     header_text = header_text.strip()
     if len(header_text) == 0 or header_text == '*':
         return []
-    #'en-US,en;q=0.9,ru;q=0.8'
+    # 'en-US,en;q=0.9,ru;q=0.8'
     ret: list[str] = []
     for i in header_text.split(','):
         i = i.strip()
@@ -80,7 +80,7 @@ def get_best_language_from_request(request: Request) -> str:
         lang = request.session.get('language')
         if lang and LanguageSettings.is_supported(lang):
             return lang
-    
+
     # Затем проверяем Accept-Language заголовок
     accept_language = request.headers.get("Accept-Language")
     if accept_language:
@@ -122,21 +122,21 @@ def get_link_for_lang(url: URL|str, lang: str) -> URL:
         parsed = URL(url=url)
     else:
         parsed = url
-    
+
     size = len(parsed.path)
     path = parsed.path
 
     if path == '/':
         return parsed.replace(path=f'/{lang}')
-    
+
     # For the /ru/bla/bla/bla cases
     if size > 4 and path[0] == '/' and path[3] == '/':
         return parsed.replace(path=f'/{lang}{parsed.path[3:]}')
-    
+
     # For the /ru cases
     if size == 3 and path[0]:
         return parsed.replace(path=f'/{lang}')
-    
+
     # General case /blablabla
     return parsed.replace(path=f'/{lang}{parsed.path}')
 
@@ -171,6 +171,6 @@ class LanguageMiddleware(BaseHTTPMiddleware):
         request.state.gettext = self.__translations[lang].gettext
         response = await call_next(request)
         return response
-    
+
 
 LanguageDep = Annotated[AvailableLanguageT, Depends(get_best_language_from_request)]

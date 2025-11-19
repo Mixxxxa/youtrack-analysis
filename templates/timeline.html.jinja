@@ -1,4 +1,4 @@
-{# 
+{#
 Copyright 2025 Mikhail Gelvikh
 SPDX-License-Identifier: Apache-2.0
 
@@ -17,17 +17,17 @@ limitations under the License.
 
 {% macro badge(text, bg_color, hover_text='', fg_color='#fff') -%}
 {% if hover_text %}
-<span 
-    class="badge" 
-    data-bs-html="true" 
-    data-bs-toggle="tooltip" 
-    title="{{ hover_text }}" 
+<span
+    class="badge"
+    data-bs-html="true"
+    data-bs-toggle="tooltip"
+    title="{{ hover_text }}"
     style="background-color: {{ bg_color }}; color: {{ fg_color }}; margin-left: 0.5rem;">
         {{ text }}
 </span>
 {% else %}
-<span 
-    class="badge" 
+<span
+    class="badge"
     style="background-color: {{ bg_color }}; color: {{ fg_color }}; margin-left: 0.5rem;">
         {{ text }}
 </span>
@@ -36,14 +36,14 @@ limitations under the License.
 
 {% macro table_nav_tab(id, text, is_active = false) -%}
 <li class="nav-item" role="presentation">
-    <button 
-        class="nav-link{{' active' if is_active}}" 
-        id="{{id}}-tab" 
-        data-bs-toggle="tab" 
+    <button
+        class="nav-link{{' active' if is_active}}"
+        id="{{id}}-tab"
+        data-bs-toggle="tab"
         data-bs-target="#{{id}}-tab-pane"
-        type="button" 
-        role="tab" 
-        aria-controls="{{ id }}-tab-pane" 
+        type="button"
+        role="tab"
+        aria-controls="{{ id }}-tab-pane"
         aria-selected="{{ 'true' if is_active else 'false' }}">
             {{ text }}
     </button>
@@ -52,14 +52,14 @@ limitations under the License.
 
 {% macro table_nav_tab_with_counter(id, text, counter_value, is_danger = false, is_active = false) -%}
 <li class="nav-item" role="presentation">
-    <button 
-        class="nav-link{{' active' if is_active}}" 
-        id="{{id}}-tab" 
-        data-bs-toggle="tab" 
+    <button
+        class="nav-link{{' active' if is_active}}"
+        id="{{id}}-tab"
+        data-bs-toggle="tab"
         data-bs-target="#{{id}}-tab-pane"
-        type="button" 
-        role="tab" 
-        aria-controls="{{ id }}-tab-pane" 
+        type="button"
+        role="tab"
+        aria-controls="{{ id }}-tab-pane"
         aria-selected="{{ 'true' if is_active else 'false' }}">
             {{ text }}
             <span class="badge text-bg-{{ 'danger' if is_danger else 'secondary' }}">
@@ -73,20 +73,20 @@ limitations under the License.
 <div class="accordion accordion-flush info-accordion" id="{{ id }}-accordion">
     <div class="accordion-item">
         <h2 class="accordion-header">
-            <button 
-                class="accordion-button" 
-                type="button" 
+            <button
+                class="accordion-button"
+                type="button"
                 data-bs-toggle="collapse"
-                data-bs-target="#{{ id }}-collapse-one" 
-                aria-expanded="true" 
+                data-bs-target="#{{ id }}-collapse-one"
+                aria-expanded="true"
                 aria-controls="{{ id }}-collapse-one">
                     <i class="bi bi-question-circle me-3" style="font-size: 1.2rem"></i>
                     {{ title }}
             </button>
         </h2>
-        <div 
-            id="{{ id }}-collapse-one" 
-            class="accordion-collapse collapse" 
+        <div
+            id="{{ id }}-collapse-one"
+            class="accordion-collapse collapse"
             data-bs-parent="#{{ id }}-accordion">
                 <div class="accordion-body">
                     {{ text | safe }}
@@ -118,16 +118,16 @@ limitations under the License.
 {% block head %}
 {{ super() }}
 <title>{{ summary }} - Timeline</title>
-<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/moment-2.29.4/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.css" rel="stylesheet" integrity="sha384-slT0z6pIluGB1bYiC+QlRxdkO/kZ44XxMNxL55+gsHW5VXAKztZYdZ5fILHh09W/" crossorigin="anonymous">
+<link rel="stylesheet" href="/static/css/datatables.min.css">
 {% endblock %}
 {% block navbargadget %}
 <a class="navbar-brand" href="timeline">Timeline</a>
 <form class="input-group ms-auto" method="GET" action="" style="width: auto">
-    <input type="text" 
-           name="issue" 
-           class="form-control" 
-           placeholder="{{ _('timeline.issue_input.placeholder') }}" 
-           aria-label="{{ _('timeline.issue_input.hover') }}" 
+    <input type="text"
+           name="issue"
+           class="form-control"
+           placeholder="{{ _('timeline.issue_input.placeholder') }}"
+           aria-label="{{ _('timeline.issue_input.hover') }}"
            required>
     <button type="submit" class="btn btn-success">{{ _('timeline.issue_input.confirm') }}</button>
 </form>
@@ -148,8 +148,8 @@ limitations under the License.
 {% if yt_errors %}
     {% set _yt_error_text_template = _('timeline.issue.tags.api_error_hover') %}
     {% set _yt_error_badge_text = _('timeline.issue.tags.api_error') %}
-    {{ badge(text=_yt_error_badge_text, 
-             bg_color='var(--bs-danger)', 
+    {{ badge(text=_yt_error_badge_text,
+             bg_color='var(--bs-danger)',
              hover_text=_yt_error_text_template) }}
 {% endif %}
 {% if tags | count %}
@@ -162,27 +162,27 @@ limitations under the License.
 <div class="graph-container">
     <div id="graph">{{ graph_div | safe }}</div>
 </div>
-<div class="row">
+<div class="row mb-2">
     <div class="col">
-        <p><b>{{ _('issue.author') }}:</b> {{ author }}</p>
-        <p><b>{{ _('issue.state') }}:</b> {{ state }}</p>
-        <p><b>{{ _('issue.assignee') }}:</b> {{ current_assignee }}</p>
-        <p><b>{{ _('issue.project') }}:</b> {{ project_name }}</p>
-        <p><b>{{ _('issue.component') }}:</b> {{ component }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.author') }}:</span> {{ author }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.state') }}:</span> {{ state }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.assignee') }}:</span> {{ current_assignee }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.project') }}:</span> {{ project_name }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.component') }}:</span> {{ component }}</p>
     </div>
     <div class="col">
-        <p><b>{{ _('issue.created') }}:</b> {{ creation_datetime }}</p>
-        <p><b>{{ _('issue.started_datetime') }}:</b> {{ started_datetime|default(not_started_placeholder, true)}}</p>
-        <p><b>{{ _('issue.reaction_duration') }}:</b> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text=_('issue.reaction_duration.help_text')) }}</p>
-        <p><b>{{ _('issue.resolve_datetime') }}:</b> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
-        <p><b>{{ _('issue.resolve_duration') }}:</b> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text=_('issue.resolve_duration.help_text')) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.created') }}:</span> {{ creation_datetime }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.started_datetime') }}:</span> {{ started_datetime|default(not_started_placeholder, true)}}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.reaction_duration') }}:</span> {{ reaction_duration|default(not_started_placeholder, true)}} {{ help_tooltip(text=_('issue.reaction_duration.help_text')) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.resolve_datetime') }}:</span> {{ resolve_datetime|default(in_progress_placeholder, true)}}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.resolve_duration') }}:</span> {{ resolve_duration|default(in_progress_placeholder, true) }} {{ help_tooltip(text=_('issue.resolve_duration.help_text')) }}</p>
     </div>
     <div class="col">
-        <p><b>{{ _('issue.scope') }}:</b> {{ scope|default(null_value_placeholder, true) }}</p>
-        <p><b>{{ _('issue.spent_time') }}:</b> {{ spent_time }}</p>
-        <p><b>{{ _('issue.scope_overrun') }}:</b> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('issue.scope_overrun.help_text')) }}</p>
-        <p><b>{{ _('issue.spent_time_dir_sub_calc') }}:</b> {{ spent_time_real }} / {{subtasks.total}} {{ help_tooltip(text=_('issue.spent_time_dir_sub_calc.help_text')) }}</p>
-        <p><b>{{ _('issue.on_hold_time_business') }}:</b> {{pauses.total_business}} {{ help_tooltip(text=_('issue.on_hold_time_business.help_text')) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.scope') }}:</span> {{ scope|default(null_value_placeholder, true) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.spent_time') }}:</span> {{ spent_time }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.scope_overrun') }}:</span> {{ scope_overrun|default(null_value_placeholder, true) }} {{ help_tooltip(text=_('issue.scope_overrun.help_text')) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.spent_time_dir_sub_calc') }}:</span> {{ spent_time_real }} / {{subtasks.total}} {{ help_tooltip(text=_('issue.spent_time_dir_sub_calc.help_text')) }}</p>
+        <p class="lh-1"><span class="fw-semibold">{{ _('issue.on_hold_time_business') }}:</span> {{pauses.total_business}} {{ help_tooltip(text=_('issue.on_hold_time_business.help_text')) }}</p>
     </div>
 </div>
 <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -207,7 +207,7 @@ limitations under the License.
                     <th scope="col">%</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for entry in tables.detailed %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);" scope="row">{{entry.name}}</th>
@@ -217,7 +217,7 @@ limitations under the License.
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="table-group-divider">
+            <tfoot>
                 <tr>
                     <th scope="col"></th>
                     <th scope="col"></th>
@@ -236,7 +236,7 @@ limitations under the License.
                     <th scope="col">%</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for entry in tables.by_people %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{entry.name}}</th>
@@ -245,7 +245,7 @@ limitations under the License.
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="table-group-divider">
+            <tfoot>
                 <tr>
                     <th scope="col"></th>
                     <th scope="col">{{ spent_time_real }}</th>
@@ -263,7 +263,7 @@ limitations under the License.
                     <th scope="col">{{ _('timeline.tables.comments.comment') }}</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for entry in comments %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{entry.author}}</th>
@@ -287,7 +287,7 @@ limitations under the License.
                     <th scope="col">%</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for item in pauses.entries %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);" scope="row">{{item.name}}</th>
@@ -299,7 +299,7 @@ limitations under the License.
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="table-group-divider">
+            <tfoot>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col"></th>
                     <th scope="col"></th>
@@ -322,7 +322,7 @@ limitations under the License.
                     <th scope="col">{{ _('timeline.tables.anomalies.details') }}</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for item in anomalies %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
@@ -336,7 +336,7 @@ limitations under the License.
     </div>
     <div class="tab-pane fade" id="subtasks-tab-pane" role="tabpanel" aria-labelledby="subtasks-tab" tabindex="0">
         {{ bs_info_accordion(id='subtasks-info', title=_('timeline.tables.subtasks.help_title'), text=_('timeline.tables.subtasks.help_text')) }}
-        
+
         <table id="subtasks-table" class="table table-hover table-sm caption-top">
             <thead>
                 <tr>
@@ -348,7 +348,7 @@ limitations under the License.
                     <th scope="col">%</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for item in subtasks.entries %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
@@ -360,7 +360,7 @@ limitations under the License.
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="table-group-divider">
+            <tfoot>
                 <tr>
                     <th style="padding-left: var(--table-left-padding);" scope="col"></th>
                     <th scope="col"></th>
@@ -383,7 +383,7 @@ limitations under the License.
                     <th scope="col">{{ _('timeline.tables.yt_errors.affected_data') }}</th>
                 </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
                 {% for entry in yt_errors %}
                 <tr>
                     <td style="padding-left: var(--table-left-padding);">{{loop.index}}</th>
@@ -399,9 +399,12 @@ limitations under the License.
 {% endblock %}
 {% block additionalscripts %}
 {{ super() }}
-<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/moment-2.29.4/dt-2.3.2/fh-4.0.3/rg-1.5.2/datatables.min.js" integrity="sha384-f3QLEviWiAkWC6k6Tv2mehe5/50E3SXnV6xejXRLc+nKuMGR3gbubKEursmnt3im" crossorigin="anonymous"></script>
+<script src="/static/js/luxon.min.js"></script>
+<script src="/static/js/datatables.min.js"></script>
 <script>
-    // Костыль, чтобы при нажатии на любой элемент легенды переключались 
+    const current_lang = '{{ settings.lang_code }}';
+
+    // Костыль, чтобы при нажатии на любой элемент легенды переключались
     // также и те элементы, что скрыты в легенде (Plotly не переключает элементы, если они скрыты в легенде)
     document.addEventListener('DOMContentLoaded', function () {
         var gd = document.getElementById('9cc162d8-61cf-4829-aede-73d8b3495197');
@@ -436,6 +439,17 @@ limitations under the License.
     DataTable.type('num', 'className', 'dt-body-left');
     // Убираем отступ между заголовком и телом таблицы
     DataTable.ext.classes.layout.row = 'row justify-content-between';
+    // Настройки по умолчанию
+    Object.assign(DataTable.defaults, {
+            searching: false,
+            paging: false,
+            info: false,
+            order: [],
+            language: {
+                url: get_datatables_translation(current_lang)
+            }
+        });
+
 
     /**
     * Конвертирует секунды в рабочее время (дни, часы, минуты)
@@ -456,10 +470,10 @@ limitations under the License.
 
         const days = Math.floor(seconds / SECONDS_IN_DAY);
         const remainingSecondsAfterDays = seconds % SECONDS_IN_DAY;
-        
+
         const hours = Math.floor(remainingSecondsAfterDays / SECONDS_IN_HOUR);
         const remainingSecondsAfterHours = remainingSecondsAfterDays % SECONDS_IN_HOUR;
-        
+
         const minutes = Math.floor(remainingSecondsAfterHours / SECONDS_IN_MINUTE);
 
         const parts = [];
@@ -484,11 +498,7 @@ limitations under the License.
     }
     $(document).ready( function () {
         $('#details-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            info: false,
-            order: [],
+            ordering: false,
             rowGroup: {
                 dataSrc: 1,
                 startRender: function (rows, group) {
@@ -499,7 +509,7 @@ limitations under the License.
                     timeInPercent = DataTable.render
                         .number(null, null, 2, '', '%')
                         .display(timeInPercent);
-        
+
                     let businessTime = rows.data()
                                            .pluck(2)
                                            .map((a => a['@data-order']*1))
@@ -511,26 +521,11 @@ limitations under the License.
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
                     return tr;
-                },
-            },
+                }
+            }
         });
-    } );
-    $(document).ready( function () {
-        $('#by-people-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            info: false
-        });
-    } );
-    $(document).ready( function () {
+        $('#by-people-table').DataTable();
         $('#comments-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            info: false,
             columnDefs: [
                 {
                     targets: 1,
@@ -539,14 +534,7 @@ limitations under the License.
                 }
             ]
         });
-    } );
-    $(document).ready( function () {
         $('#anomalies-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            info: false,
             columnDefs: [
                 {
                     targets: 1,
@@ -555,15 +543,7 @@ limitations under the License.
                 }
             ]
         });
-    } );
-    $(document).ready( function () {
         $('#pauses-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            ordering: false,
-            info: false,
             rowGroup: {
                 dataSrc: 0,
                 startRender: function (rows, group) {
@@ -574,7 +554,7 @@ limitations under the License.
                     timeInPercent = DataTable.render
                         .number(null, null, 2, '', '%')
                         .display(timeInPercent);
-        
+
                     let physicalTime = rows.data()
                                            .pluck(3)
                                            .map((a => a['@data-order']*1))
@@ -593,19 +573,10 @@ limitations under the License.
                     addCell(tr, businessTime);
                     addCell(tr, timeInPercent);
                     return tr;
-                },
-            },
+                }
+            }
         });
+        $('#subtasks-table').DataTable();
     } );
-    $(document).ready( function () {
-        $('#subtasks-table').DataTable({
-            fixedHeader: true,
-            paging: false,
-            searching: false,
-            order: [],
-            info: false
-        });
-    } );
-
 </script>
 {% endblock %}

@@ -15,42 +15,44 @@
 
 
 from datetime import date, timedelta
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable
-from functools import lru_cache
 
 from youtrack.entities import Version
 from youtrack.utils.duration import Duration
-from youtrack.utils.timestamp import Timestamp
+from youtrack.utils.anomalies import Anomaly
 from youtrack.instance import YouTrackInstanceConfig
 
 from .exceptions import BadQueryError, BadDatesError
 from ..settings import Settings, LocalSettings, ProjectSettings
+from ..utils.once import once
 
 
 JSON = Any
 
 
-# TODO lru cache with max 2 values and timeout
-def get_predefined_date_presets(translator) -> list[Version]:
+BATCH_CONCURRENCY = 10  # I feel so
+
+
+def _get_predefined_date_presets(translator) -> list[Version]:
     _ = translator
     today = date.today()
     ret = [
-        Version(name=_('batch.date_preset.week'), 
-                begin=(today-timedelta(weeks=1)).isoformat(), 
+        Version(name=_('batch.date_preset.week'),
+                begin=(today - timedelta(weeks=1)).isoformat(),
                 end=date.today().isoformat()),
-        Version(name=_('batch.date_preset.month'), 
-                begin=(today-timedelta(days=30)).isoformat(), 
+        Version(name=_('batch.date_preset.month'),
+                begin=(today - timedelta(days=30)).isoformat(),
                 end=date.today().isoformat()),
-        Version(name=_('batch.date_preset.half_year'), 
-                begin=(today-timedelta(days=180)).isoformat(), 
-                end=date.today().isoformat()) # TODO think better
+        Version(name=_('batch.date_preset.half_year'),
+                begin=(today - timedelta(days=180)).isoformat(),
+                end=date.today().isoformat())  # TODO think better
     ]
     return ret
 
 
-# TODO cache
-def get_date_presets(settings: Settings) -> list[JSON]:
+@once()
+def _get_date_presets(settings: Settings) -> list[JSON]:
     ret = list()
     for i in settings.app_config.date_presets:
         ret.append({
@@ -67,43 +69,48 @@ def get_date_presets(settings: Settings) -> list[JSON]:
     return sorted(ret, key=lambda x: x['name'])
 
 
+@once()
+def _get_projects_info(settings: Settings) -> list[JSON]:
+    return [proj.to_dict() for proj in settings.yt_config.projects.values()]
+
+
 def get_basic_batch_context(translator, settings: Settings, sub_mode: str):
     return {
-        'projects': [proj.to_dict() for proj in settings.yt_config.projects.values()],
-        'date_presets': get_date_presets(settings=settings),
-        'predefined_date_presets': get_predefined_date_presets(translator=translator),
+        'projects': _get_projects_info(settings=settings),
+        'date_presets': _get_date_presets(settings=settings),
+        'predefined_date_presets': _get_predefined_date_presets(translator=translator),
         'batch_sub_mode': sub_mode
     }
 
 
 def validate_input_params(yt_config: YouTrackInstanceConfig, project: str, components: list[str]):
-    if not project in yt_config.projects.keys():
+    if project not in yt_config.projects.keys():
         raise BadQueryError(query_params=['project'])
 
     unknown_components = set(components) - set(yt_config.projects[project].components)
     if len(unknown_components):
         raise BadQueryError(query_params=list(unknown_components))
-    
 
-def validate_dates(begin: str, end: str) -> tuple[date,date]:
+
+def validate_dates(begin: str, end: str) -> tuple[date, date]:
     try:
-       begin_date = date.fromisoformat(begin)
-       end_date = date.fromisoformat(end)
+        begin_date = date.fromisoformat(begin)
+        end_date = date.fromisoformat(end)
     except ValueError:
-       raise BadDatesError(begin=begin, end=end)
+        raise BadDatesError(begin=begin, end=end)
 
     if end_date < begin_date:
         raise BadDatesError(begin=begin, end=end)
-    return begin_date,end_date
+    return begin_date, end_date
 
 
 def get_required_issue_fields() -> list[str]:
     return [
-        'summary', 
+        'summary',
         'created',
         'resolved',
-        'idReadable', 
-        'numberInProject', 
+        'idReadable',
+        'numberInProject',
         'customFields(id,name,value(minutes,fullName,name))',
         'project(id,shortName)',
         'tags(name,color(background,foreground))'
@@ -119,34 +126,37 @@ class BatchShortIssueInfo:
     component: str|None = None
     assignee: str|None = None
     project_short_name: str|None = None
+    anomalies: list[Anomaly] = field(default_factory=list)
 
     def has_timings(self) -> bool:
         return self.scope and self.spent_time
-    
+
     def is_scope_overrun(self) -> bool:
         return self.has_timings() and self.spent_time > self.scope
-    
+
     def lost_scope(self) -> bool:
         return not self.scope and self.spent_time
-    
+
     @property
     def overrun(self) -> Duration|None:
         if self.has_timings():
             return self.spent_time - self.scope
         return None
-    
-
-TransformerFunc = Callable[[BatchShortIssueInfo,JSON],JSON]
-FilterFunc = Callable[[BatchShortIssueInfo],bool]
 
 
-def process_issue_custom_fields(json, app_config: LocalSettings, output_transformer_func: TransformerFunc, filter_func: FilterFunc|None = None) -> list[BatchShortIssueInfo]:
+TransformerFunc = Callable[[BatchShortIssueInfo, JSON], JSON]
+FilterFunc = Callable[[BatchShortIssueInfo], bool]
+
+
+def process_issue_custom_fields(json, app_config: LocalSettings,
+                                output_transformer_func: TransformerFunc,
+                                filter_func: FilterFunc|None = None) -> list[JSON]:
     ret = []
     for entry in json:
         data = BatchShortIssueInfo()
         data.project_short_name = entry['project']['shortName']
-        for field in entry['customFields']:
-            name, value = field['name'], field['value']
+        for entry_field in entry['customFields']:
+            name, value = entry_field['name'], entry_field['value']
 
             if not data.assignee and name == 'Assignee':
                 data.assignee = value['fullName']
@@ -188,6 +198,11 @@ def batch_output_transformer(parsed: BatchShortIssueInfo, raw: JSON) -> JSON:
         'state': parsed.state,
         'assignee': parsed.assignee,
         'tags': [{'text': i['name'],
-                    'bg_color': i['color']['background'],
-                    'fg_color': i['color']['foreground'] } for i in raw['tags']]
+                  'bg_color': i['color']['background'],
+                  'fg_color': i['color']['foreground']} for i in raw['tags']]
     }
+
+
+def batched(seq, n):
+    for i in range(0, len(seq), n):
+        yield seq[i:i + n]

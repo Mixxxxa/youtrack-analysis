@@ -1,0 +1,21 @@
+[flake8]
+ignore=
+    E126,
+    E227,
+    # FA on one-line prototypes
+    E704,
+    # They just say to do vice-versa
+    W503,
+    W504
+per-file-ignores =
+    tests/test_issue_state.py:E131,E241
+    tests/test_helper.py:E501
+    tests/test_lang.py:E501
+    tests/test_workitem.py:E501
+    */__init__.py:F401,F403
+max-line-length = 140
+exclude =
+    .git,
+    __pycache__,
+    translations
+

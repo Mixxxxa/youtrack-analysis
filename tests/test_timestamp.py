@@ -31,7 +31,7 @@ def test_format_ru():
 def test_formats():
     val = Timestamp.from_datetime(friday_end)
     assert val.format_iso8601() == '2025-04-18T15:00+00:00'
-    
+
 
 def test_default_format():
     val = Timestamp.from_datetime(friday_end)
@@ -39,13 +39,13 @@ def test_default_format():
 
 
 def test_is_monday():
-    assert Timestamp(friday_end).is_monday() == False
-    assert Timestamp(monday_begin).is_monday() == True
+    assert not Timestamp(friday_end).is_monday()
+    assert Timestamp(monday_begin).is_monday()
 
 
 def test_is_day_start():
-    assert Timestamp(friday_end).is_day_start() == False
-    assert Timestamp(monday_begin).is_day_start() == True
+    assert not Timestamp(friday_end).is_day_start()
+    assert Timestamp(monday_begin).is_day_start()
 
 
 def test_prev():
@@ -93,7 +93,8 @@ def test_now():
     assert offset == timedelta()
 
 
+# TODO Strange test
 def test_sub():
-    val1 = Timestamp.now() # Should be with 
+    val1 = Timestamp.now()
     val2 = Timestamp(datetime.fromisoformat('2024-04-19T15:40:36.970+00:00'))
-    assert val1 - val2 # Test
+    assert val1 - val2

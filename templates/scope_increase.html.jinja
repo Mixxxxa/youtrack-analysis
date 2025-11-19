@@ -1,4 +1,4 @@
-{# 
+{#
 Copyright 2025 Mikhail Gelvikh
 SPDX-License-Identifier: Apache-2.0
 
@@ -182,7 +182,7 @@ limitations under the License.
         const datetimeZone = '{{ settings.timezone }}';
         const langCode = '{{ settings.lang_code }}'
         const NA_text = 'N/A';
-        
+
         const created_datetime = row.created_datetime ? luxon.DateTime.fromMillis(row.created_datetime)
                                                                       .setLocale(langCode)
                                                                       .setZone(datetimeZone)
@@ -254,7 +254,7 @@ limitations under the License.
             const tasksData = {{ dataset.entries | tojson }};
             const table = new DataTable('#tasks-table', {
                 language: {
-                    url: current_lang === 'ru' ? '/static/datatables-2.3.4-ru.json' : '',
+                    url: get_datatables_translation(current_lang),
                 },
                 layout: {
                     topStart: {
@@ -265,7 +265,7 @@ limitations under the License.
                         search: {
                             placeholder: '{{ _("batch.search.fulltext_search_feature_hint") }}'
                         },
-                        buttons: [ 
+                        buttons: [
                             {
                                 extend: 'collection',
                                 text: 'Export',
@@ -299,7 +299,7 @@ limitations under the License.
                                     <i class="bi bi-graph-up-arrow"></i>
                                     </a>
                                 `;
-                            } 
+                            }
                             else if(type === 'sort' || type === 'type')
                             {
                                 return parseInt(row.id_value);
@@ -331,8 +331,8 @@ limitations under the License.
                     { data: 'state', visible: false },
                     { data: 'component', visible: false },
                     { data: 'assignee' },
-                    { 
-                        data: 'scope', 
+                    {
+                        data: 'scope',
                         visible: false,
                         render: function (data, type, row) {
                             if (type === 'sort' || type === 'type')
@@ -340,16 +340,16 @@ limitations under the License.
                             return data;
                         }
                     },
-                    { 
-                        data: 'spent_time', 
+                    {
+                        data: 'spent_time',
                         render: function (data, type, row) {
                             if (type === 'sort' || type === 'type')
                                 return parseInt(row.spent_time_value);
                             return data;
                         }
                     },
-                    { 
-                        data: 'increased_total', 
+                    {
+                        data: 'increased_total',
                         render: function (data, type, row) {
                             if (type === 'sort' || type === 'type')
                                 return parseInt(row.increased_total);

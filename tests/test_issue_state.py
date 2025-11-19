@@ -49,7 +49,8 @@ def test_parse(text: str, expected: IssueState.Pre):
         (IssueState.Pre.Duplicate,  False, False,       False,    False,    False, False)
     ]
 )
-def test_special_functions(value: IssueState.Pre, buffer: bool, on_hold: bool, in_progress: bool, review: bool, in_work: bool, active: bool):
+def test_special_functions(value: IssueState.Pre, buffer: bool, on_hold: bool,
+                           in_progress: bool, review: bool, in_work: bool, active: bool):
     v = IssueState(value)
     assert v.is_buffer() == buffer
     assert v.is_hold() == on_hold
@@ -66,7 +67,8 @@ def test_special_functions(value: IssueState.Pre, buffer: bool, on_hold: bool, i
         ('Issue Created', False, False,       False,    False,    False, False),
     ]
 )
-def test_handle_custom_states(value: str, buffer: bool, on_hold: bool, in_progress: bool, review: bool, in_work: bool, active: bool):
+def test_handle_custom_states(value: str, buffer: bool, on_hold: bool,
+                              in_progress: bool, review: bool, in_work: bool, active: bool):
     a = IssueState.parse(value)
     assert a.is_buffer() == buffer
     assert a.is_hold() == on_hold

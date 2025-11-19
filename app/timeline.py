@@ -68,19 +68,19 @@ def get_pauses_info(data: IssueInfo) -> tuple[Duration, Duration, list[PersonPau
                 'duration_order': i.duration.to_seconds(),
                 'duration_business': i.business_duration.format_yt(),
                 'duration_business_order': i.business_duration.to_seconds(),
-                'percents': round(i.business_duration.to_seconds() / total_business.to_seconds() * 100, 2) 
+                'percents': round(i.business_duration.to_seconds() / total_business.to_seconds() * 100, 2)
             })
     return total, total_business, pauses
 
 
 def to_dict(data: IssueInfo, config: LocalSettings):
-    tags = [{'text': i.name, 
-                'bg_color': i.background_color, 
-                'fg_color': i.foreground_color} for i in data.tags]
+    tags = [{'text': i.name,
+             'bg_color': i.background_color,
+             'fg_color': i.foreground_color} for i in data.tags]
     comments = [{'creation_datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
-                    'author': i.author, 
-                    'text': i.text} for i in data.comments]
-    
+                 'author': i.author,
+                 'text': i.text} for i in data.comments]
+
     def affected_field_to_str(field: IssueProblem.AffectedField) -> str:
         if field == IssueProblem.AffectedField.SpentTime:
             return 'Spent Time'
@@ -89,13 +89,13 @@ def to_dict(data: IssueInfo, config: LocalSettings):
         elif field == IssueProblem.AffectedField.State:
             return 'State'
         raise RuntimeError('Unknown affected field')
-    
+
     yt_errors = [{
         'description': entry.msg,
-        'affected_data': list({ affected_field_to_str(field) for field in entry.affected_fields })
+        'affected_data': list({affected_field_to_str(field) for field in entry.affected_fields})
     } for entry in data.yt_errors.get()]
-    
-    pauses_total,pauses_total_business,pauses_by_people = get_pauses_info(data)
+
+    pauses_total, pauses_total_business, pauses_by_people = get_pauses_info(data)
 
     subtasks = []
     subtasks_total_spent_time = Duration()
@@ -117,7 +117,7 @@ def to_dict(data: IssueInfo, config: LocalSettings):
         'component': data.component,
         'project_name': data.project.name,
         'spent_time_real': data.spent_time_real.format_yt(),
-        
+
         # Basic
         'id': data.id,
         'summary': data.summary,
@@ -155,7 +155,7 @@ def get_detailed_info(data: IssueInfo) -> list[dict[str, str]]:
         key = (work_item.name, str(work_item.state))
         cont[key] += work_item.duration
 
-    def detailed_sorter(item) -> tuple[str,int]:
+    def detailed_sorter(item) -> tuple[str, int]:
         state = item[0][1]
         duration = -(item[1].to_seconds())
         return state, duration
@@ -167,7 +167,7 @@ def get_detailed_info(data: IssueInfo) -> list[dict[str, str]]:
              'state': k[1],
              'spent_time': v.format_yt(),
              'spent_time_order': v.to_seconds(),
-             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
+             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k, v in cont.items()]
 
 
 def get_by_people_info(data: IssueInfo) -> list[dict[str, str]]:
@@ -177,21 +177,21 @@ def get_by_people_info(data: IssueInfo) -> list[dict[str, str]]:
 
     cont = dict(sorted(cont.items(), key=lambda item: item[1], reverse=True))
     total_spent_time = data.spent_time.to_seconds()
-    
-    return [{'name': k, 
+
+    return [{'name': k,
              'spent_time': v.format_yt(),
              'spent_time_order': v.to_seconds(),
-             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k,v in cont.items()]
+             'percent': round(v.to_seconds() / total_spent_time * 100, 2)} for k, v in cont.items()]
 
 
 async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str, tz: timezone, settings: Settings):
     _ = translator
-    
-    two_business_days = Duration.from_minutes(60*8*2)
+
+    two_business_days = Duration.from_minutes(60 * 8 * 2)
     anomaly_detector = AnomaliesDetector(review_thresshold=two_business_days)
     helper = YouTrackHelper(instance_url=settings.app_config.host,
                             api_key=settings.app_config.api_key)
-    data = await helper.get_summary(id=issue_id, 
+    data = await helper.get_summary(id=issue_id,
                                     anomaly_detector=anomaly_detector,
                                     custom_fields=settings.app_config.custom_fields)
     anomalies_data = anomaly_detector.get()
@@ -201,43 +201,46 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
                                  'Start': [],
                                  'Finish': [],
                                  'State': []})
-    
+
     if not is_empty(data.work_items):
         df_workitems = pd.DataFrame([{'Assignee': i.name,
                                       'Start': i.begin().to_datetime(tz),
                                       'Finish': i.end().to_datetime(tz),
-                                      'State': str(i.state) } for i in data.work_items])
-    
+                                      'State': str(i.state)} for i in data.work_items])
+
     df_comments = pd.DataFrame([{'date': i.timestamp.to_datetime(tz),
                                  'author': i.author,
-                                 'text': i.text } for i in data.comments])
+                                 'text': i.text} for i in data.comments])
 
     df_assignee_entries = []
     for i, v in enumerate(data.assignees):
         if i == 0:
             continue
-        prev = data.assignees[i-1]
-        df_assignee_entries.append({ 'date': prev.timestamp.to_datetime(tz), 'assignee': prev.value})
-        df_assignee_entries.append({ 'date': v.timestamp.to_datetime(tz), 'assignee': prev.value})
-        df_assignee_entries.append({ 'date': v.timestamp.to_datetime(tz), 'assignee': v.value})
+        prev = data.assignees[i - 1]
+        df_assignee_entries.append({'date': prev.timestamp.to_datetime(tz), 'assignee': prev.value})
+        df_assignee_entries.append({'date': v.timestamp.to_datetime(tz), 'assignee': prev.value})
+        df_assignee_entries.append({'date': v.timestamp.to_datetime(tz), 'assignee': v.value})
     # HACK: если задача не завершена, то рисуем линию assignee от последней активности до текущего момента
     if len(data.assignees) > 0:
         prev = data.assignees[-1]
-        df_assignee_entries.append({ 'date': prev.timestamp.to_datetime(tz), 'assignee': prev.value })
-        df_assignee_entries.append({ 'date': data.resolve_datetime.to_datetime(tz) if data.is_finished else Timestamp.now().to_datetime(tz), 'assignee': prev.value })
+        df_assignee_entries.append({'date': prev.timestamp.to_datetime(tz), 'assignee': prev.value})
+        df_assignee_entries.append({
+            'date': data.resolve_datetime.to_datetime(tz) if data.is_finished else Timestamp.now().to_datetime(tz),
+            'assignee': prev.value
+        })
     df_assignee = pd.DataFrame(df_assignee_entries)
 
     # HACK: Empty extra to remove series name
     hide_series_name = '<extra></extra>'
 
     fig = ex.timeline(
-        df_workitems, 
-        x_start='Start', 
-        x_end='Finish', 
+        df_workitems,
+        x_start='Start',
+        x_end='Finish',
         y='Assignee',
         color='State',
-        category_orders = { "Assignee": list(reversed(list(dict.fromkeys([i.value for i in data.assignees])))) },
-        color_discrete_map = {
+        category_orders={"Assignee": list(reversed(list(dict.fromkeys([i.value for i in data.assignees]))))},
+        color_discrete_map={
             'Buffer': 'SkyBlue',
             'In progress': 'Orange',
             'Review': 'SeaGreen',
@@ -251,7 +254,7 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
             legendgroup="misc",
             legendgrouptitle_text=_('timeline.chart.legend.other'),
             name=_('timeline.chart.legend.assignee'),
-            hovertemplate="<b>Assignee</b><br><i>%{x}</i><br>%{y}"+hide_series_name
+            hovertemplate="<b>Assignee</b><br><i>%{x}</i><br>%{y}" + hide_series_name
         )
     )
     if not is_empty(data.comments):
@@ -259,67 +262,66 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
             x=df_comments['date'],
             y=df_comments['author'],
             text=df_comments['text'].str.wrap(width=70, subsequent_indent='<br>'),
-            hovertemplate="<b>%{y}</b><br><i>%{x}</i><br>%{text}"+hide_series_name,
+            hovertemplate="<b>%{y}</b><br><i>%{x}</i><br>%{text}" + hide_series_name,
             name=_('timeline.chart.legend.comments'),
             mode='markers',
             marker=dict(size=10, color='DarkViolet'),
             zorder=9999
         ))
 
-    for i,work_item in enumerate(data.pauses):
+    for i, work_item in enumerate(data.pauses):
         fig.add_vrect(
             x0=work_item.begin().to_datetime(tz),
             x1=work_item.end().to_datetime(tz),
-            fillcolor="grey", 
+            fillcolor="grey",
             line_width=0,
             opacity=0.3,
-            name='Pause', # НЕ МЕНЯТЬ! Связано с JS
+            name='Pause',  # НЕ МЕНЯТЬ! Связано с JS
             legendgroup="misc",
-            showlegend=(i==0)
+            showlegend=(i == 0)
         )
 
-    for i,entry in enumerate(anomalies_data):
+    for i, entry in enumerate(anomalies_data):
         if not isinstance(entry, OverdueAnomaly):
             continue
 
         fig.add_vline(
             x=entry.timestamp.to_datetime(tz),
-            line_color="DarkRed", 
-            showlegend=(i==0),
-            name='Overdue', # НЕ МЕНЯТЬ! Связано с JS
+            line_color="DarkRed",
+            showlegend=(i == 0),
+            name='Overdue',  # НЕ МЕНЯТЬ! Связано с JS
             legendgroup="misc"
         )
-    
-    # Старт работ должен быть самой первой линей, 
+
+    # Старт работ должен быть самой первой линей,
     # т.к. на неё должена нормально накладываться линия создание задачи
     if data.started_datetime is not None:
         fig.add_vline(
-            x=data.started_datetime.to_datetime(tz), 
-            line_color="blue", 
-            showlegend=True, 
-            name=_('timeline.chart.legend.started_datetime'), 
-            #legendgroup="milestones"
+            x=data.started_datetime.to_datetime(tz),
+            line_color="blue",
+            showlegend=True,
+            name=_('timeline.chart.legend.started_datetime')
         )
 
     fig.add_vline(
-        x=data.creation_datetime.to_datetime(tz), 
+        x=data.creation_datetime.to_datetime(tz),
         line_dash="dash",
-        line_color="red", 
-        opacity=1.0, 
-        showlegend=True, 
+        line_color="red",
+        opacity=1.0,
+        showlegend=True,
         name=_('timeline.chart.legend.created_datetime')
     )
-       
+
     if data.is_finished:
         fig.add_vline(
-            x=data.resolve_datetime.to_datetime(tz), 
-            line_dash="dash", 
-            line_color="red", 
-            opacity=1.0, 
-            showlegend=True, 
+            x=data.resolve_datetime.to_datetime(tz),
+            line_dash="dash",
+            line_color="red",
+            opacity=1.0,
+            showlegend=True,
             name=_('timeline.chart.legend.resolved_datetime'),
         )
-    
+
     fig.update_yaxes(showgrid=True)
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
@@ -333,14 +335,14 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
     range_min, range_max = data.get_activities_range()
     fig.update_xaxes(
         ticks="outside",
-        ticklabelmode="period", 
-        tickcolor="black", 
-        ticklen=10, 
+        ticklabelmode="period",
+        tickcolor="black",
+        ticklen=10,
         minor=dict(
-            ticklen=4,  
-            dtick=7*24*60*60*1000,  
-            tick0="2016-07-03", 
-            griddash='dot', 
+            ticklen=4,
+            dtick=7 * 24 * 60 * 60 * 1000,
+            tick0="2016-07-03",
+            griddash='dot',
             gridcolor='white'
         ),
         range=[
@@ -360,14 +362,14 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
     template_data = dict(
         issue_url=settings.app_config.get_issue_url(issue_id),
         graph_div=pio.to_html(fig, full_html=False, div_id='9cc162d8-61cf-4829-aede-73d8b3495197'),
-        anomalies = [{
+        anomalies=[{
             'datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
             'responsible': i.responsible,
             'description': i.to_string(_=translator)
         } for i in anomalies_data],
         tables={
-           'detailed': get_detailed_info(data),
-           'by_people': get_by_people_info(data)
+            'detailed': get_detailed_info(data),
+            'by_people': get_by_people_info(data)
         }
     )
     template_data.update(to_dict(data, settings.app_config))

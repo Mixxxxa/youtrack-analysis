@@ -27,7 +27,7 @@ class SearchQueryBuilder:
     only_started: bool = False
     only_resolved: bool = False
     sort_by: str|None = None
-    
+
     def Build(self) -> str:
         ret = ''
 
@@ -45,17 +45,17 @@ class SearchQueryBuilder:
         if self.__resolve_date_present():
             append(f'resolved date: {self.resolve_date_begin.isoformat()} .. {self.resolve_date_end.isoformat()}')
         if self.only_resolved:
-            append(f'#Resolved')
+            append('#Resolved')
         if self.only_started:
             append('Spent time: 1m .. *')
         append(f'sort by: {self.sort_by if self.sort_by else "updated"}')
         return ret
-    
+
     @staticmethod
     def __escape_component_name(component: str) -> str:
         if component.find(' ') != -1:
             return f'{{{component}}}'
         return component
-    
+
     def __resolve_date_present(self) -> bool:
         return self.resolve_date_begin and self.resolve_date_end

@@ -20,14 +20,14 @@ import pytest
 
 
 def test_is_empty():
-    assert is_empty([]) == True
-    assert is_empty([1,2,3]) == False
-    assert is_empty('') == True
-    assert is_empty('hello') == False
+    assert is_empty([])
+    assert not is_empty([1, 2, 3])
+    assert is_empty('')
+    assert not is_empty('hello')
 
 
 @pytest.mark.parametrize(
-    'text, expected', [('true', True), 
+    'text, expected', [('true', True),
                        ('TRUE', True),
                        ('True', True),
                        ('1', True),
@@ -50,7 +50,7 @@ def test_str_to_bool(text: str, expected: str|int):
     # 1 if left is greater (left should be sorted after the right)
     'l, r, expected', [
         ('id-123', 'id-123', 0),
-        ('id-123', 'id-124', -1), 
+        ('id-123', 'id-124', -1),
         ('id-1230', 'id-124', 1),
         ('id-123', 'ID-123', 0),
         ('id-05', 'ID-5', 0),
