@@ -24,7 +24,7 @@ from youtrack.utils.issue_state import IssueState
 from youtrack.helper import YouTrackHelper
 from youtrack.utils.anomalies import Anomaly, ScopeIncreasedAnomaly, ReopenAnomaly
 
-from ..settings import Settings, LocalSettings
+from ..settings import Settings, AppSettings
 from .batch_shared import (
     BATCH_CONCURRENCY,
     BatchShortIssueInfo,
@@ -39,7 +39,7 @@ from .batch_shared import (
 from asyncio import Semaphore, TaskGroup
 
 
-def get_anomalies(json, app_config: LocalSettings, project_short_name: str, current_state: str) -> list[Anomaly]:
+def get_anomalies(json, app_config: AppSettings, project_short_name: str, current_state: str) -> list[Anomaly]:
     is_started = False
     resolved = False
 

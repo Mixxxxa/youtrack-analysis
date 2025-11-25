@@ -14,12 +14,12 @@
 # limitations under the License.
 
 
-from .local_settings import LocalSettings
+from .app_settings import AppSettings
 from youtrack.instance import YouTrackInstanceConfig
 from dataclasses import dataclass
 
 
 @dataclass
 class Settings:
-    app_config: LocalSettings
+    app_config: AppSettings
     yt_config: YouTrackInstanceConfig

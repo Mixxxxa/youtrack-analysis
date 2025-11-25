@@ -14,4 +14,4 @@
 # limitations under the License.
 
 from .settings import Settings
-from .local_settings import LocalSettings, ProjectSettings
+from .app_settings import AppSettings, ProjectSettings

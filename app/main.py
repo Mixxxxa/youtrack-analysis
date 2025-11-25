@@ -30,7 +30,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from youtrack.helper import YouTrackHelper
 from youtrack.utils.exceptions import InvalidIssueIdError, UnableToCountIssues, TooMuchIssuesInBatchError
 
-from .settings import Settings, LocalSettings
+from .settings import Settings, AppSettings
 from .utils.log import logger
 from .timeline import get_timeline_page_data
 from .language_middleware import LanguageMiddleware, LanguageSettings, LanguageDep, get_link_for_lang
@@ -46,7 +46,7 @@ from .batch import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Init
-    local = LocalSettings()
+    local = AppSettings()
     logging.basicConfig(level=logging.DEBUG if local.debug else logging.INFO)
 
     logger.info(f'Loaded local settings:\n{local}')

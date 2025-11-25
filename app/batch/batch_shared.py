@@ -24,7 +24,7 @@ from youtrack.utils.anomalies import Anomaly
 from youtrack.instance import YouTrackInstanceConfig
 
 from .exceptions import BadQueryError, BadDatesError
-from ..settings import Settings, LocalSettings, ProjectSettings
+from ..settings import Settings, AppSettings, ProjectSettings
 from ..utils.once import once
 
 
@@ -148,7 +148,7 @@ TransformerFunc = Callable[[BatchShortIssueInfo, JSON], JSON]
 FilterFunc = Callable[[BatchShortIssueInfo], bool]
 
 
-def process_issue_custom_fields(json, app_config: LocalSettings,
+def process_issue_custom_fields(json, app_config: AppSettings,
                                 output_transformer_func: TransformerFunc,
                                 filter_func: FilterFunc|None = None) -> list[JSON]:
     ret = []

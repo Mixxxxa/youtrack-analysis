@@ -32,7 +32,7 @@ from youtrack.utils.problems import IssueProblem
 from youtrack.helper import YouTrackHelper
 from youtrack.entities import IssueInfo, WorkItem, get_workitem_business_duration
 
-from .settings import Settings, LocalSettings
+from .settings import Settings, AppSettings
 
 
 @dataclass
@@ -73,7 +73,7 @@ def get_pauses_info(data: IssueInfo) -> tuple[Duration, Duration, list[PersonPau
     return total, total_business, pauses
 
 
-def to_dict(data: IssueInfo, config: LocalSettings):
+def to_dict(data: IssueInfo, config: AppSettings):
     tags = [{'text': i.name,
              'bg_color': i.background_color,
              'fg_color': i.foreground_color} for i in data.tags]
