@@ -33,7 +33,8 @@ from .batch_shared import (
     validate_dates,
     get_required_issue_fields,
     process_issue_custom_fields,
-    batch_output_transformer
+    batch_output_transformer,
+    validate_tags
 )
 
 from asyncio import Semaphore, TaskGroup
@@ -104,16 +105,25 @@ async def get_batch_scope_increase_data(translator,
                                         project: str,
                                         components: list[str],
                                         begin: str,
-                                        end: str):
+                                        end: str,
+                                        ignored_tags: set[str]):
     # Empty page
-    if not project and len(components) == 0 and not begin and not end:
+    if (len(components) == 0
+            and len(ignored_tags) == 0
+            and not project
+            and not begin
+            and not end):
         return dict()
 
     # Input validation
     validate_input_params(yt_config=settings.yt_config,
                           project=project,
                           components=components)
+    project_info = settings.yt_config.projects[project]
     begin_date, end_date = validate_dates(begin=begin, end=end)
+    ignored_tags = validate_tags(project=project_info,
+                                 tags=ignored_tags,
+                                 param_name='ignored_tags')
 
     # Getting data
     query = SearchQueryBuilder(project=project,
@@ -132,8 +142,16 @@ async def get_batch_scope_increase_data(translator,
             'query_url': str(helper.get_issues_search_url(query))
         }
     }
+
+    def filter_func(parsed: BatchShortIssueInfo) -> bool:
+        # Если есть игнорируемые теги, то скип
+        if len(ignored_tags & parsed.tags):
+            return False
+        return True
+
     parsed = process_issue_custom_fields(json=data,
                                          app_config=settings.app_config,
+                                         filter_func=filter_func,
                                          output_transformer_func=batch_output_transformer)
     if len(parsed) == 0:
         return context

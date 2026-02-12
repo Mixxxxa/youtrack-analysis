@@ -18,7 +18,7 @@ from datetime import date, timedelta
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from youtrack.entities import Version
+from youtrack.entities import ProjectExt, Version
 from youtrack.utils.duration import Duration
 from youtrack.utils.anomalies import Anomaly
 from youtrack.instance import YouTrackInstanceConfig
@@ -71,7 +71,11 @@ def _get_date_presets(settings: Settings) -> list[JSON]:
 
 @once()
 def _get_projects_info(settings: Settings) -> list[JSON]:
-    return [proj.to_dict() for proj in settings.yt_config.projects.values()]
+    ret = {k: v.to_dict() for k, v in settings.yt_config.projects.items()}
+    for k, v in settings.app_config.projects.items():
+        ret[k]['virtual_components'] = [i.model_dump() for i in v.virtual_components]
+    # Explicit convert to list and sort because JSON doesn't provide any guarantees
+    return sorted(ret.values(), key=lambda proj: str(proj['short_name']).lower())
 
 
 def get_basic_batch_context(translator, settings: Settings, sub_mode: str):
@@ -79,7 +83,10 @@ def get_basic_batch_context(translator, settings: Settings, sub_mode: str):
         'projects': _get_projects_info(settings=settings),
         'date_presets': _get_date_presets(settings=settings),
         'predefined_date_presets': _get_predefined_date_presets(translator=translator),
-        'batch_sub_mode': sub_mode
+        'batch_sub_mode': sub_mode,
+        'batch_default_ignored_tags': list(settings.app_config.batch_mode.default_ignored_tags),
+        'batch_default_threshold_min_scope': settings.app_config.batch_mode.default_min_scope.format_yt(),
+        'batch_default_threshold_value': settings.app_config.batch_mode.default_scope_threshold.format_yt()
     }
 
 
@@ -90,6 +97,22 @@ def validate_input_params(yt_config: YouTrackInstanceConfig, project: str, compo
     unknown_components = set(components) - set(yt_config.projects[project].components)
     if len(unknown_components):
         raise BadQueryError(query_params=list(unknown_components))
+
+
+def validate_tags(project: ProjectExt, tags: set[str], param_name: str) -> set[str]:
+    unknown_tags = set(tags) - set(project.tags)
+    if len(unknown_tags):
+        raise BadQueryError(query_params=[param_name])
+    return tags
+
+
+def validate_yt_duration(duration: str|None, param_name: str) -> Duration:
+    if duration is None:
+        return Duration()
+    try:
+        return Duration.from_text(duration)
+    except ValueError:
+        raise BadQueryError(query_params=[param_name])
 
 
 def validate_dates(begin: str, end: str) -> tuple[date, date]:
@@ -127,6 +150,7 @@ class BatchShortIssueInfo:
     assignee: str|None = None
     project_short_name: str|None = None
     anomalies: list[Anomaly] = field(default_factory=list)
+    tags: set[str] = field(default_factory=set)
 
     def has_timings(self) -> bool:
         return self.scope and self.spent_time
@@ -155,6 +179,7 @@ def process_issue_custom_fields(json, app_config: AppSettings,
     for entry in json:
         data = BatchShortIssueInfo()
         data.project_short_name = entry['project']['shortName']
+        data.tags = {i['name'] for i in entry['tags']}
         for entry_field in entry['customFields']:
             name, value = entry_field['name'], entry_field['value']
 

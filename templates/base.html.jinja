@@ -21,6 +21,67 @@ limitations under the License.
 </div>
 {%- endmacro %}
 
+{% macro help_tooltip(text) -%}
+<a href="#" data-bs-toggle="tooltip" title="{{ text }}" class="help-icon">
+    <i class="bi bi-question-circle-fill"></i>
+</a>
+{%- endmacro %}
+
+{% macro multiselect_dropdown(id_base, label, button_placeholder='Select...', search_placeholder='Search...', empty_text='No items', hint_text=None) -%}
+<div class="w-100">
+    <label class="form-label" for="{{ id_base }}-dropdown-btn">{{ label }}</label>
+
+    <div class="dropdown components-dropdown w-100" id="{{ id_base }}-dropdown">
+        <button
+            id="{{ id_base }}-dropdown-btn"
+            class="btn btn-outline-secondary w-100 text-start components-toggle dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+            data-empty-label="{{ button_placeholder }}">
+            {{ button_placeholder }}
+        </button>
+
+        <div class="dropdown-menu" id="{{ id_base }}-menu" aria-labelledby="{{ id_base }}-dropdown-btn">
+            <div class="components-toolbar">
+                <div class="d-flex gap-2">
+                    <div class="flex-grow-1">
+                        <input
+                            id="{{ id_base }}-search"
+                            type="search"
+                            class="form-control form-control-sm"
+                            placeholder="{{ search_placeholder }}">
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="{{ id_base }}-select-all" title="Select all">
+                            {{ _('base.select_all') }}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="{{ id_base }}-clear-all" title="Clear all">
+                            {{ _('base.clear_all') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-list" id="{{ id_base }}-list">
+                {# JS будет рендерить сюда группы в заданном порядке #}
+                <div id="{{ id_base }}-groups"></div>
+            </div>
+        </div>
+    </div>
+
+    {% if hint_text %}
+        <div class="form-text">{{ hint_text }}</div>
+    {% endif %}
+
+    <div class="d-none" id="{{ id_base }}-empty-text">{{ empty_text }}</div>
+</div>
+{%- endmacro %}
+
+
 <!doctype html>
 <html lang="ru" data-bs-theme="light">
 <head>
@@ -312,6 +373,312 @@ limitations under the License.
         function get_datatables_translation(lang_code) {
             return lang_code === 'ru' ? '/static/datatables-2.3.4-ru.json' : ''
         }
+
+        function safeTrim(v) {
+            return (v == null) ? '' : String(v).trim();
+        }
+
+        function normalizeList(list) {
+            return Array.from(new Set((list || []).map(v => String(v))));
+        }
+
+        class MultiSelectDropdown {
+                constructor({ idBase }) {
+                    this.idBase = idBase;
+
+                    this.menu = document.getElementById(`${idBase}-menu`);
+                    this.search = document.getElementById(`${idBase}-search`);
+                    this.btnSelectAll = document.getElementById(`${idBase}-select-all`);
+                    this.btnClearAll = document.getElementById(`${idBase}-clear-all`);
+                    this.list = document.getElementById(`${idBase}-list`);
+                    this.groupsRoot = document.getElementById(`${idBase}-groups`);
+                    this.btn = document.getElementById(`${idBase}-dropdown-btn`);
+                    this.emptyTextEl = document.getElementById(`${idBase}-empty-text`);
+
+                    this.exists = !!(this.menu && this.search && this.btnSelectAll && this.btnClearAll && this.list && this.groupsRoot && this.btn);
+                    if (!this.exists) return;
+
+                    this.expandMap = new Map(); // optionValue -> array of expanded real values
+
+                    this._wireEvents();
+                    this.updateButtonLabel();
+                }
+
+                _wireEvents() {
+                    this.search.addEventListener('input', (e) => this.filter(e.target.value));
+
+                    this.btnSelectAll.addEventListener('click', () => {
+                        this.menu.querySelectorAll('.component-item:not(.d-none) .ms-check').forEach(ch => ch.checked = true);
+                        this.updateButtonLabel();
+                    });
+
+                    this.btnClearAll.addEventListener('click', () => {
+                        this.menu.querySelectorAll('.component-item:not(.d-none) .ms-check').forEach(ch => ch.checked = false);
+                        this.updateButtonLabel();
+                    });
+
+                    this.menu.addEventListener('change', (e) => {
+                        if (e.target.classList.contains('ms-check')) {
+                            this.updateButtonLabel();
+                        }
+                    });
+                }
+
+                _getEmptyText() {
+                    return (this.emptyTextEl?.textContent || 'No items').trim();
+                }
+
+                _itemHtml({ value, label }, idSeq) {
+                    const vEsc = escapeHtml(value);
+                    const lEsc = escapeHtml(label);
+                    const inputId = `${this.idBase}-opt-${idSeq}`;
+                    return `
+            <div class="component-item">
+                <div class="form-check">
+                    <input class="form-check-input ms-check" type="checkbox" id="${inputId}" value="${vEsc}">
+                    <label class="form-check-label" for="${inputId}">${lEsc}</label>
+                </div>
+            </div>
+        `;
+                }
+
+                /**
+                 * groups: [{ title?: string, prefix?: string, items: string[] }]
+                 * - order is preserved
+                 * - checkbox value = prefix + item
+                 * - checkbox label = item
+                 */
+                render(groups = [], preselectedValues = []) {
+                    if (!this.exists) return;
+
+                    // Reset expansions on each render
+                    this.expandMap.clear();
+
+                    // Normalize groups but KEEP items order exactly as provided
+                    const normGroups = (groups || []).map(g => ({
+                        title: (g?.title ?? '').toString(),
+                        prefix: (g?.prefix ?? '').toString(),
+                        items: Array.isArray(g?.items) ? g.items : []
+                    }));
+
+                    // Helper: de-duplicate string items while preserving order.
+                    // For object items, keep as-is (order preserved).
+                    const dedupeStringsPreserveOrder = (arr) => {
+                        const seen = new Set();
+                        const out = [];
+                        for (const x of arr) {
+                            const s = String(x);
+                            if (seen.has(s)) continue;
+                            seen.add(s);
+                            out.push(s);
+                        }
+                        return out;
+                    };
+
+                    // Build HTML in passed order, skipping empty groups
+                    let idSeq = 0;
+                    const parts = [];
+
+                    const prepared = normGroups.map(g => {
+                        // Split items into strings/objects, preserve original order overall.
+                        // We only dedupe strings; objects left intact.
+                        const strings = [];
+                        const objects = [];
+
+                        for (const it of g.items) {
+                            if (typeof it === 'string') strings.push(it);
+                            else if (it && typeof it === 'object') objects.push(it);
+                        }
+
+                        // For strings: normalize + dedupe, but keep order
+                        const normStrings = dedupeStringsPreserveOrder(strings.map(s => String(s)));
+
+                        // Rebuild in original order: we need to preserve the exact order,
+                        // so we iterate original items and map them to normalized forms.
+                        const normalizedItems = [];
+                        const usedString = new Set();
+                        for (const it of g.items) {
+                            if (typeof it === 'string') {
+                                const s = String(it);
+                                if (usedString.has(s)) continue; // dedupe
+                                usedString.add(s);
+                                normalizedItems.push(s);
+                            } else if (it && typeof it === 'object') {
+                                normalizedItems.push(it);
+                            }
+                        }
+
+                        // (Optional) If you want normalization of strings (e.g., trimming), do it here:
+                        // We keep original as provided; only cast to String above.
+
+                        return { ...g, items: normalizedItems };
+                    });
+
+                    const nonEmptyGroups = prepared.filter(g => (g.items || []).length > 0);
+
+                    if (nonEmptyGroups.length === 0) {
+                        this.groupsRoot.innerHTML =
+                            `<div class="text-body-secondary small px-2 py-2">${escapeHtml(this._getEmptyText())}</div>`;
+                        this._setControlsEnabled(false);
+                        this.updateButtonLabel();
+                        return;
+                    }
+
+                    nonEmptyGroups.forEach((g, idx) => {
+                        const titleHtml = g.title
+                            ? `<div class="ms-group-title fw-semibold small text-body-secondary px-1 pt-2">${escapeHtml(g.title)}</div>`
+                            : '';
+
+                        const itemsHtml = (g.items || []).map(rawItem => {
+                            let label, value, expandsTo;
+
+                            // 1) string item: "UI"
+                            if (typeof rawItem === 'string') {
+                                label = rawItem;
+                                value = `${g.prefix}${rawItem}`;
+                                expandsTo = null;
+                            }
+                            // 2) object item: { label/name, expandsTo/values, value? }
+                            else if (rawItem && typeof rawItem === 'object') {
+                                label = String(rawItem.label ?? rawItem.name ?? '');
+                                const rawKey = String(rawItem.value ?? label);
+
+                                const arr = rawItem.expandsTo ?? rawItem.values ?? null;
+                                expandsTo = Array.isArray(arr) ? arr.map(v => String(v)) : null;
+
+                                // IMPORTANT: virtual options must have internal values that never collide with real items
+                                if (expandsTo && expandsTo.length) {
+                                    value = `__virt__:${g.prefix}${rawKey}`; // internal-only
+                                    this.expandMap.set(value, expandsTo);
+                                } else {
+                                    value = `${g.prefix}${rawKey}`;
+                                }
+                            } else {
+                                return '';
+                            }
+
+                            return this._itemHtml({ value, label }, ++idSeq);
+                        }).join('');
+
+                        const dividerHtml = idx === 0 ? '' : `<div class="components-divider my-2"></div>`;
+
+                        parts.push(`
+                <div class="ms-group">
+                    ${dividerHtml}
+                    ${titleHtml}
+                    <div class="ms-group-items">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `);
+                    });
+
+                    this.groupsRoot.innerHTML = parts.join('');
+
+                    this._setControlsEnabled(true);
+
+                    // Apply selection by VALUES (note: virtual items have internal "__virt__:" values)
+                    if (preselectedValues && preselectedValues.length) {
+                        this.setSelected(preselectedValues);
+                    } else {
+                        this.updateButtonLabel();
+                    }
+
+                    // Reset search & filter
+                    this.search.value = '';
+                    this.filter('');
+                }
+
+                _setControlsEnabled(enabled) {
+                    this.search.disabled = !enabled;
+                    this.btnSelectAll.disabled = !enabled;
+                    this.btnClearAll.disabled = !enabled;
+                    this.list.classList.toggle('is-disabled', !enabled);
+                }
+
+                filter(query) {
+                    if (!this.exists) return;
+                    const q = (query || '').toLowerCase().trim();
+
+                    // Toggle items
+                    this.groupsRoot.querySelectorAll('.component-item').forEach(el => {
+                        const txt = el.querySelector('.form-check-label')?.textContent?.toLowerCase() || '';
+                        const match = !q || txt.includes(q);
+                        el.classList.toggle('d-none', !match);
+                    });
+
+                    // Hide empty groups (no visible items)
+                    this.groupsRoot.querySelectorAll('.ms-group').forEach(groupEl => {
+                        const anyVisible = !!groupEl.querySelector('.component-item:not(.d-none)');
+                        groupEl.classList.toggle('d-none', !anyVisible);
+                    });
+                }
+
+                getSelected() {
+                    if (!this.exists) return [];
+                    return Array.from(this.menu.querySelectorAll('.ms-check:checked')).map(ch => ch.value);
+                }
+
+                getSelectedForUrl() {
+                    if (!this.exists) return [];
+
+                    const selected = this.getSelected();
+                    const out = [];
+
+                    for (const v of selected) {
+                        const expanded = this.expandMap.get(v);
+                        if (expanded && expanded.length) {
+                            out.push(...expanded);      // раскрываем виртуальную опцию
+                        } else {
+                            out.push(v);                // обычная опция как есть
+                        }
+                    }
+
+                    // dedupe while preserving order
+                    const seen = new Set();
+                    return out.filter(x => {
+                        if (seen.has(x)) return false;
+                        seen.add(x);
+                        return true;
+                    });
+                }
+
+                getAllValuesSet() {
+                    if (!this.exists) return new Set();
+                    return new Set(Array.from(this.menu.querySelectorAll('.ms-check')).map(ch => ch.value));
+                }
+
+                setSelected(values) {
+                    if (!this.exists) return;
+                    const set = new Set((values || []).map(v => String(v)));
+                    this.menu.querySelectorAll('.ms-check').forEach(ch => {
+                        ch.checked = set.has(ch.value);
+                    });
+                    this.updateButtonLabel();
+                }
+
+                updateButtonLabel() {
+                    if (!this.exists) return;
+
+                    const checked = Array.from(this.menu.querySelectorAll('.ms-check:checked'));
+
+                    // Show LABELS (without prefix), not values
+                    const labels = checked.map(ch => {
+                        const id = ch.getAttribute('id');
+                        const lbl = id ? this.menu.querySelector(`label[for="${CSS.escape(id)}"]`) : null;
+                        return (lbl?.textContent || ch.value || '').trim();
+                    }).filter(Boolean);
+
+                    if (labels.length === 0) {
+                        this.btn.textContent = this.btn.getAttribute('data-empty-label') || 'Select...';
+                    } else if (labels.length <= 3) {
+                        this.btn.textContent = labels.join(', ');
+                    } else {
+                        this.btn.textContent = `Selected: ${labels.length}`;
+                    }
+                }
+            }
+
     </script>
     {% endblock %}
 </body>

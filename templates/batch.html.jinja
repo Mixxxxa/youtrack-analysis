@@ -33,45 +33,29 @@ limitations under the License.
     </div>
     <div class="card-body">
         <form id="filter-form" class="row gy-3 gx-3 align-items-end filters-row" onsubmit="return false;">
-            <div class="col-12 align-self-start col-md-3-fixed">
+            <div class="col-12 align-self-start col-md-2-fixed">
                 <label for="project-select" class="form-label">{{ _('batch.scope_overrun.search.project') }}</label>
                 <select id="project-select" class="form-select" required></select>
             </div>
-            <div class="col-12 align-self-start col-md-5-fixed">
-                <label class="form-label" for="component-dropdown-btn">{{ _('batch.scope_overrun.search.components')}}</label>
-                <div class="dropdown components-dropdown w-100" id="component-dropdown">
-                    <button id="component-dropdown-btn"
-                        class="btn btn-outline-secondary w-100 text-start components-toggle dropdown-toggle"
-                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        {{ _('batch.scope_overrun.search.selected_components.selected_info') }}
-                    </button>
-                    <div class="dropdown-menu" id="component-menu" aria-labelledby="component-dropdown-btn">
-                        <div class="components-toolbar">
-                            <div class="d-flex gap-2">
-                                <div class="flex-grow-1">
-                                    <input id="component-search" type="search" class="form-control form-control-sm"
-                                        placeholder="{{ _('batch.scope_overrun.search.selected_components.internal_placeholder') }}">
-                                </div>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        id="components-select-all" title="{{ _('base.select_all') }}">
-                                        {{ _('base.select_all') }}
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        id="components-clear-all" title="{{ _('base.clear_all') }}">
-                                        {{ _('base.clear_all') }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="components-list" id="components-list">
-                            <div id="components-special"></div>
-                            <div id="components-divider" class="components-divider d-none"></div>
-                            <div id="components-regular"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-text">{{ _('batch.scope_overrun.search.components_hint') }}</div>
+            <div class="col-12 align-self-start col-md-3-fixed">
+                {{ multiselect_dropdown(
+                    id_base='components',
+                    label=_('batch.search.components.label'),
+                    button_placeholder=_('batch.search.components.button_placeholder'),
+                    search_placeholder=_('component.multiselectdropdown.search_placeholder'),
+                    empty_text=_('component.multiselectdropdown.empty_text'),
+                    hint_text=_('component.multiselectdropdown.hint_text')
+                ) }}
+            </div>
+            <div class="col-12 align-self-start col-md-3-fixed">
+                {{ multiselect_dropdown(
+                    id_base='ignored-tags',
+                    label=_('batch.search.ignored_tags.label'),
+                    button_placeholder=_('batch.search.ignored_tags.button_placeholder'),
+                    search_placeholder=_('component.multiselectdropdown.search_placeholder'),
+                    empty_text=_('component.multiselectdropdown.empty_text'),
+                    hint_text=_('batch.search.ignored_tags.hint_text')
+                ) }}
             </div>
             <div class="col-6 align-self-start col-md-2-fixed">
                 <label for="date-from" class="form-label">{{ _('batch.scope_overrun.search.date_begin') }}</label>
@@ -81,6 +65,35 @@ limitations under the License.
                 <label for="date-to" class="form-label">{{ _('batch.scope_overrun.search.date_end') }}</label>
                 <input type="date" class="form-control" id="date-to" required>
                 <div class="form-text">{{ _('batch.scope_overrun.search.date_end_hint') }}</div>
+            </div>
+            <div class="col-12">
+                <div class="card card-body">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="advanced-filters-switch">
+                        <label class="form-check-label" for="advanced-filters-switch">
+                            {{ _('batch.scope_overrun.search.custom_threshold.label') }}
+                        </label>
+                    </div>
+                    <div class="collapse" id="advanced-filters-collapse">
+                        <div class="row g-2">
+                            <div class="form-text mt-2">{{ _('batch.scope_overrun.search.custom_threshold.description') }}</div>
+                            <div class="col-12 col-lg-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">{{ _('batch.scope_overrun.search.custom_threshold.min_scope_label') }}</span>
+                                    <input id="overrun_threshold_min_scope" type="text" class="form-control" placeholder="Например: 1d1h1m"
+                                        value="{{ batch_default_threshold_min_scope }}">
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">{{ _('batch.scope_overrun.search.custom_threshold.value_label') }}</span>
+                                    <input id="overrun_threshold_value" type="text" class="form-control" placeholder="Например: 1d1h1m"
+                                        value="{{ batch_default_threshold_value }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-12">
                 <div class="d-flex flex-wrap gap-2">

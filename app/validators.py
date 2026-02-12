@@ -8,9 +8,9 @@ def host_validator(value: str) -> str:
 
 
 def api_key_validator(value: str) -> str:
-    if value.startswith('Bearer perm:'):
+    if len(value) != 0:
         return value
-    raise ValueError("YouTrack API key should start with 'Bearer perm:'")
+    raise ValueError("YouTrack API key shouldn't be empty")
 
 
 def iso8601_date_validator(value: str) -> str:

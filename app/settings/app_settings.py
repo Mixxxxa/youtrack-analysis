@@ -23,12 +23,24 @@ from youtrack.utils.duration import Duration
 from youtrack.entities import CustomFields
 
 
+class VirtualComponent(BaseModel):
+    name: str
+    values: list[str]
+
+
+class BatchModeSettings(BaseModel):
+    default_ignored_tags: set[str]
+    default_min_scope: Duration
+    default_scope_threshold: Duration
+
+
 class CustomFieldsDefaultValues(BaseModel):
     scope: Duration
 
 
 class ProjectSettings(BaseModel):
     default_values: CustomFieldsDefaultValues
+    virtual_components: list[VirtualComponent]
 
 
 class DatePreset(BaseModel):
@@ -46,6 +58,7 @@ class AppSettings(BaseSettings):
     custom_fields: CustomFields = CustomFields.default_config()  # какие поля брать при парсинге
     date_presets: list[DatePreset] = Field(default_factory=list)
     projects: dict[str, ProjectSettings] = Field(default_factory=dict)  # настроики по проектам
+    batch_mode: BatchModeSettings  # настройки batch режима
 
     @classmethod
     def settings_customise_sources(

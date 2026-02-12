@@ -288,6 +288,13 @@ class YouTrackHelper:
                             query={'fields': 'id,name,shortName'})
             return await self.__fetch_json(session=session, url=url)
 
+        async def get_all_tags(session: aiohttp.ClientSession) -> t.Any:
+            url = URL.build(scheme='https',
+                            host=self.__instance_url,
+                            path='/youtrack/api/tags',
+                            query={'fields': 'name'})
+            return await self.__fetch_json(session=session, url=url)
+
         async def get_all_custom_fields(session: aiohttp.ClientSession) -> t.Any:
             url = URL.build(scheme='https',
                             host=self.__instance_url,
@@ -364,6 +371,7 @@ class YouTrackHelper:
 
         async with aiohttp.ClientSession() as session:
             projects = await get_all_projects(session=session)
+            tags = sorted(list({i['name'] for i in await get_all_tags(session=session) if i['name'] != 'Star'}))
             custom_fields = await get_all_custom_fields(session=session)
             custom_field_instances = extract_all_custom_field_instances(custom_fields)
 
@@ -378,5 +386,6 @@ class YouTrackHelper:
                 projects_ret[i['shortName']] = ProjectExt(short_name=i['shortName'],
                                                           name=i['name'],
                                                           id=i['id'],
-                                                          components=component_info.get(i['id'], []))
+                                                          components=component_info.get(i['id'], []),
+                                                          tags=tags)
             return YouTrackInstanceConfig(projects=projects_ret, versions=versions_info)

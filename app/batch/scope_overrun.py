@@ -28,12 +28,10 @@ from .batch_shared import (
     get_required_issue_fields,
     batch_output_transformer,
     process_issue_custom_fields,
-    JSON
+    JSON,
+    validate_tags,
+    validate_yt_duration
 )
-
-
-def overrun_filter(parsed: BatchShortIssueInfo) -> bool:
-    return parsed.is_scope_overrun() or parsed.lost_scope()
 
 
 def overrun_transformer(parsed: BatchShortIssueInfo, raw: JSON) -> JSON:
@@ -65,16 +63,39 @@ def get_overrun_stats(input: JSON, output: JSON) -> JSON:
     }
 
 
-async def get_batch_scope_overrun_data(translator, settings: Settings, project: str, components: list[str], begin: str, end: str):
+async def get_batch_scope_overrun_data(translator,
+                                       settings: Settings,
+                                       project: str,
+                                       components: list[str],
+                                       begin: str,
+                                       end: str,
+                                       overrun_threshold_scope: str,
+                                       overrun_threshold_value: str,
+                                       ignored_tags: set[str]):
     # Empty page
-    if not project and len(components) == 0 and not begin and not end:
+    if (len(components) == 0
+            and len(ignored_tags) == 0
+            and not project
+            and not begin
+            and not end
+            and not overrun_threshold_scope
+            and not overrun_threshold_value):
         return dict()
 
     # Input validation
     validate_input_params(yt_config=settings.yt_config,
                           project=project,
                           components=components)
+    project_info = settings.yt_config.projects[project]
+
     begin_date, end_date = validate_dates(begin=begin, end=end)
+    ignored_tags = validate_tags(project=project_info,
+                                 tags=ignored_tags,
+                                 param_name='ignored_tags')
+    threshold_scope = validate_yt_duration(duration=overrun_threshold_scope,
+                                           param_name='target_min_scope')
+    threshold_value = validate_yt_duration(duration=overrun_threshold_value,
+                                           param_name='scope_threshold')
 
     # Getting data
     query = SearchQueryBuilder(project=project,
@@ -86,6 +107,37 @@ async def get_batch_scope_overrun_data(translator, settings: Settings, project: 
                             api_key=settings.app_config.api_key)
     data = await helper.get_raw_issues_by_query(query=query,
                                                 fields=get_required_issue_fields())
+
+    def overrun_filter(parsed: BatchShortIssueInfo) -> bool:
+        # Если есть игнорируемые теги, то скип
+        if len(ignored_tags & parsed.tags):
+            return False
+
+        scope = parsed.scope
+        settings_for_project = settings.app_config.projects.get(parsed.project_short_name) if parsed.project_short_name else None
+        if scope is None and settings_for_project:
+            # Если в задаче нет Scope, но есть default в настройках
+            scope = settings_for_project.default_values.scope
+
+        # Если совсем нет Scope, то покажем — не идеально, но лучше чем просто потерять задачу
+        if scope is None:
+            return True
+
+        spent_time = parsed.spent_time
+        # Если нет Spent Time, то и выхода за него быть не может
+        if spent_time is None:
+            return False
+
+        if spent_time > scope:
+            # Убираем задачи, которые больше указанного Scope и SpentTime+Threshold
+            # по сути, разрешаемое превышение
+            if scope >= threshold_scope and spent_time < scope + threshold_value:
+                return False
+            return True
+
+        # Все остальное убираем
+        return False
+
     dataset = {
         'entries': process_issue_custom_fields(json=data,
                                                app_config=settings.app_config,
