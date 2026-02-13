@@ -96,12 +96,6 @@ limitations under the License.
 </div>
 {%- endmacro %}
 
-{% macro help_tooltip(text) -%}
-<a href="#" data-bs-toggle="tooltip" title="{{ text }}" class="help-icon">
-    <i class="bi bi-question-circle-fill"></i>
-</a>
-{%- endmacro %}
-
 {% set in_progress_placeholder %}
 <i class="fst-italic text-secondary">{{ _('issue.placeholders.in_progress') }}</i>
 {% endset %}
@@ -529,7 +523,7 @@ limitations under the License.
             columnDefs: [
                 {
                     targets: 1,
-                    render: DataTable.render.datetime('D.MM.YYYY HH:mm'),
+                    render: DataTable.render.datetime('{{ settings.datetime_format }}'),
                     className: 'dt-head-left dt-body-left'
                 }
             ]
@@ -538,7 +532,7 @@ limitations under the License.
             columnDefs: [
                 {
                     targets: 1,
-                    render: DataTable.render.datetime('D.MM.YYYY HH:mm'),
+                    render: DataTable.render.datetime('{{ settings.datetime_format }}'),
                     className: 'dt-head-left dt-body-left'
                 }
             ]

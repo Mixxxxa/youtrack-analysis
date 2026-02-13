@@ -58,6 +58,7 @@ async def lifespan(app: FastAPI):
                                   yt_config=await helper.get_instance_settings())
 
     settings: Settings = app.state.settings
+    settings.Validate()
     logger.info(f'Loaded remote settings:\n{settings.yt_config}')
 
     yield
@@ -98,7 +99,7 @@ def get_basic_html_context(request: Request):
         'settings': {
             'lang_code': session_lang,
             'date_format': 'dd MMMM yyyy (EEE)',            # for luxon
-            'datetime_format': 'dd MMMM yyyy (EEE) HH:mm',  # for luxon
+            'datetime_format': 'dd MMMM yyyy (EEE) HH:mm',  # 01 January 2025 (Wed) 10:36 (for luxon)
             'timezone': 'UTC+3'                             # for luxon
         },
         'supported_languages': [{
@@ -172,8 +173,8 @@ async def timeline(request: Request, lang: str, issue: Optional[str] = None):
     session_lang: str = request.session['language']
     if lang != session_lang:
         base_url = request.url_for('timeline', lang=session_lang)
-        if issue:
-            return RedirectResponse(url=base_url.include_query_params(issue=issue))
+        if len(request.query_params) != 0:
+            return RedirectResponse(url=base_url.include_query_params(*request.query_params))
         return RedirectResponse(url=base_url)
 
     _: Callable[[str], str] = request.state.gettext
@@ -222,12 +223,15 @@ async def scope_overrun(request: Request,
                         project: str|None = None,
                         component: Annotated[list[str], Query()] = [],
                         begin: str|None = None,
-                        end: str|None = None):
+                        end: str|None = None,
+                        threshold_scope: str|None = None,
+                        threshold_value: str|None = None,
+                        ignored_tags: Annotated[set[str], Query()] = []):
     session_lang: str = request.session['language']
     if lang != session_lang:
         base_url = request.url_for('scope_overrun', lang=session_lang, batch_mode=batch_mode)
-        if component or begin or end:
-            return RedirectResponse(url=base_url.include_query_params(component=component, begin=begin, end=end))
+        if len(request.query_params) != 0:
+            return RedirectResponse(url=base_url.include_query_params(*request.query_params))
         return RedirectResponse(url=base_url)
 
     if batch_mode not in ('scope-increase', 'scope-overrun'):
@@ -249,7 +253,10 @@ async def scope_overrun(request: Request,
                                                       project=project,
                                                       components=component,
                                                       begin=begin,
-                                                      end=end)
+                                                      end=end,
+                                                      overrun_threshold_scope=threshold_scope,
+                                                      overrun_threshold_value=threshold_value,
+                                                      ignored_tags=ignored_tags)
         elif batch_mode == 'scope-increase':
             render_template = 'scope_increase.html.jinja'
             data = await get_batch_scope_increase_data(translator=_,
@@ -257,7 +264,8 @@ async def scope_overrun(request: Request,
                                                        project=project,
                                                        components=component,
                                                        begin=begin,
-                                                       end=end)
+                                                       end=end,
+                                                       ignored_tags=ignored_tags)
         context |= data
         assert 'batch_sub_mode' in context and len(context['batch_sub_mode']), 'Sub mode should be specified'
     except BadQueryError as e:

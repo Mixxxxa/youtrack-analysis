@@ -23,3 +23,18 @@ from dataclasses import dataclass
 class Settings:
     app_config: AppSettings
     yt_config: YouTrackInstanceConfig
+
+    def Validate(self) -> None:
+        # Check values in virtual components by projects
+        for project_short_name, project_info in self.app_config.projects.items():
+            instance_project_config = self.yt_config.projects.get(project_short_name)
+            if instance_project_config:
+                project_components = set(instance_project_config.components)
+                for i in project_info.virtual_components:
+                    # Virtual component can't use the real component name
+                    if i.name in project_components:
+                        raise RuntimeError(f"Virtual component '{i.name}' can't be used because there is the same real component")
+                    # All values in virtual group should really exist
+                    unknown_components = set(i.values) - project_components
+                    if len(unknown_components):
+                        raise RuntimeError(f"Virtual components {unknown_components} cannot be used in the '{i.name}' group, as they are not present in project '{project_short_name}'")

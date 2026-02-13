@@ -81,13 +81,15 @@ class Project:
 @dataclass
 class ProjectExt(Project):
     components: list[str]
+    tags: list[str]
 
     def to_dict(self) -> dict[str, str|list[str]]:
         return {
             'short_name': self.short_name,
             'name': self.name,
             'id': self.id,
-            'components': self.components
+            'components': self.components,
+            'tags': self.tags,
         }
 
 

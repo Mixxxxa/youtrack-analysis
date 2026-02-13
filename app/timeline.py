@@ -363,7 +363,7 @@ async def get_timeline_page_data(translator: Callable[[str], str], issue_id: str
         issue_url=settings.app_config.get_issue_url(issue_id),
         graph_div=pio.to_html(fig, full_html=False, div_id='9cc162d8-61cf-4829-aede-73d8b3495197'),
         anomalies=[{
-            'datetime': i.timestamp.to_datetime().isoformat(timespec='minutes'),
+            'datetime': i.timestamp.to_datetime(tz).isoformat(timespec='minutes'),
             'responsible': i.responsible,
             'description': i.to_string(_=translator)
         } for i in anomalies_data],

@@ -89,6 +89,21 @@ limitations under the License.
         background: transparent;
     }
 
+    /* Remove grey hover/highlight inside multiselect dropdown items */
+    .components-list .component-item:hover,
+    .components-list .form-check:hover,
+    .components-list .form-check:active,
+    .components-list .form-check:focus-within,
+    .components-list .form-check-label:hover {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+
+    /* Also remove any highlight on label hover */
+    .components-list .form-check-label:hover {
+        background: transparent !important;
+    }
+
     /* Разделитель между особыми и обычными компонентами */
     .components-divider {
         height: 1px;
@@ -221,9 +236,6 @@ limitations under the License.
     const projectsData = {{ projects | tojson }};
     const current_lang = '{{ settings.lang_code }}';
 
-    // Placeholder для "особых" компонентов
-    const SPECIAL_COMPONENTS = []; // Например: ['Empty', 'DevRel']
-
     // DOM-ссылки
     const projectSelect = document.getElementById('project-select');
     const componentMenu = document.getElementById('component-menu');
@@ -235,119 +247,41 @@ limitations under the License.
     const btnClearAll = document.getElementById('components-clear-all');
     const dateFromEl = document.getElementById('date-from');
     const dateToEl = document.getElementById('date-to');
+    const advancedFiltersSwitch = document.getElementById('advanced-filters-switch');
+    const advancedFiltersCollapseEl = document.getElementById('advanced-filters-collapse');
+    const targetMinScopeEl = document.getElementById('overrun_threshold_min_scope');
+    const scopeThresholdEl = document.getElementById('overrun_threshold_value');
+    const ignoredTagsMenu = document.getElementById('ignored-tags-menu');
+    const ignoredTagsItems = document.getElementById('ignored-tags-items');
+    const ignoredTagsSearch = document.getElementById('ignored-tags-search');
+    const ignoredTagsSelectAllBtn = document.getElementById('ignored-tags-select-all');
+    const ignoredTagsClearAllBtn = document.getElementById('ignored-tags-clear-all');
 
     // Индексы проектов
     const byShortName = new Map(projectsData.map(p => [p.short_name, p]));
     const firstProjectShort = projectsData.length ? projectsData[0].short_name : null;
 
-    function normalizeList(list) {
-        return Array.from(new Set((list || []).map(v => String(v))));
-    }
-
-    function renderComponentsMenu(projectShortName, preselected = []) {
-        let compIdSeq = 0;
-
-        const componentToHtml = function(value){
-            const vEsc = escapeHtml(value);
-            compIdSeq += 1;
-            const inputId = 'comp-' + compIdSeq;
-            return `
-                <div class="component-item">
-                    <div class="form-check">
-                        <input class="form-check-input component-check" type="checkbox" id="${inputId}" name="components" value="${vEsc}">
-                        <label class="form-check-label" for="${inputId}">${vEsc}</label>
-                    </div>
-                </div>
-            `;
-        };
-
-        const project = byShortName.get(projectShortName);
-        const special = normalizeList(SPECIAL_COMPONENTS);
-        const comps = normalizeList(project?.components || []);
-
-        // Рендерим элементы
-        componentsSpecial.innerHTML = special.map(componentToHtml).join('');
-        componentsRegular.innerHTML = comps.map(componentToHtml).join('');
-
-        // Нужен ли разделитель?
-        componentsDivider.classList.toggle('d-none', !(special.length && comps.length));
-
-        // Есть ли вообще что показывать?
-        const hasAny = (special.length + comps.length) > 0;
-
-        // Пустой стейт списка: сообщение вместо чекбоксов
-        if (!hasAny) {
-            componentsSpecial.innerHTML = '';
-            componentsRegular.innerHTML = '<div class="text-body-secondary small px-2 py-2">{{ _("batch.scope_overrun.search.selected_components.empty_text") }}</div>';
-        }
-
-        // Блокируем/разблокируем тулбар и список
-        componentSearch.disabled = !hasAny;
-        btnSelectAll.disabled = !hasAny;
-        btnClearAll.disabled = !hasAny;
-        document.getElementById('components-list').classList.toggle('is-disabled', !hasAny);
-
-        // Проставить выбранные (если есть что выбирать)
-        if (hasAny && preselected && preselected.length) {
-            const set = new Set(preselected);
-            componentMenu.querySelectorAll('.component-check').forEach(ch => {
-                ch.checked = set.has(ch.value);
-            });
-        }
-
-        // Сброс поиска и фильтр (безопасно при пустом стейте — компонентных элементов нет)
-        componentSearch.value = '';
-        filterComponents('');
-
-        updateComponentButtonLabel();
-    }
-
-    function filterComponents(query) {
-        const q = (query || '').toLowerCase().trim();
-        let visSpec = 0, visReg = 0;
-
-        componentsSpecial.querySelectorAll('.component-item').forEach(el => {
-            const txt = el.querySelector('.form-check-label')?.textContent.toLowerCase() || '';
-            const match = !q || txt.includes(q);
-            el.classList.toggle('d-none', !match);
-            if (match) visSpec++;
-        });
-        componentsRegular.querySelectorAll('.component-item').forEach(el => {
-            const txt = el.querySelector('.form-check-label')?.textContent.toLowerCase() || '';
-            const match = !q || txt.includes(q);
-            el.classList.toggle('d-none', !match);
-            if (match) visReg++;
-        });
-
-        componentsDivider.classList.toggle('d-none', !(visSpec > 0 && visReg > 0));
-    }
-
-    function getSelectedComponents() {
-        return Array.from(componentMenu.querySelectorAll('.component-check:checked')).map(ch => ch.value);
-    }
-
-    function setSelectedComponents(values) {
-        const set = new Set(values.map(String));
-        componentMenu.querySelectorAll('.component-check').forEach(ch => {
-            ch.checked = set.has(ch.value);
-        });
-        updateComponentButtonLabel();
-    }
-
-    function updateComponentButtonLabel() {
-        const btn = document.getElementById('component-dropdown-btn');
-        const selected = getSelectedComponents();
-        if (selected.length === 0) {
-            btn.textContent = '{{ _("batch.scope_overrun.search.selected_components.placeholder") }}';
-        } else if (selected.length <= 3) {
-            btn.textContent = selected.join(', ');
-        } else {
-            btn.textContent = `{{ _("batch.scope_overrun.search.selected_components.selected_text_prefix") }}: ${selected.length}`;
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         const current_lang = '{{ settings.lang_code }}';
+
+        let advCollapse = null;
+        if (advancedFiltersCollapseEl) {
+            advCollapse = new bootstrap.Collapse(advancedFiltersCollapseEl, { toggle: false });
+        }
+
+        function setAdvancedFiltersEnabled(enabled) {
+            if (advancedFiltersSwitch) advancedFiltersSwitch.checked = !!enabled;
+            if (advCollapse) {
+                if (enabled) advCollapse.show();
+                else advCollapse.hide();
+            }
+        }
+
+        if (advancedFiltersSwitch) {
+            advancedFiltersSwitch.addEventListener('change', () => {
+                setAdvancedFiltersEnabled(advancedFiltersSwitch.checked);
+            });
+        }
 
         // Заполнить проекты
         for (const p of projectsData) {
@@ -358,34 +292,38 @@ limitations under the License.
         }
         if (firstProjectShort) projectSelect.value = firstProjectShort;
 
-        // Рендер компонентов для выбранного проекта
-        renderComponentsMenu(projectSelect.value);
+        const default_ignored_tags = {{ batch_default_ignored_tags | tojson }};
 
-        // Смена проекта -> перерисовать список компонентов
+        const componentsDropdown = new MultiSelectDropdown({ idBase: 'components' });
+        const ignoredTagsDropdown = new MultiSelectDropdown({ idBase: 'ignored-tags' });
+
+        function getComponentsGroupsForProject(projectShortName) {
+            const project = byShortName.get(projectShortName);
+
+            const quickPickGroups = (project?.virtual_components || []).map(vc => ({
+                label: vc.name,
+                expandsTo: vc.values
+            }));
+            return [
+                { title: 'Groups (quick pick)', prefix: '', items: quickPickGroups },
+                { title: 'Components', prefix: '', items: project.components || [] }
+            ];
+        }
+        function getTagsGroupsForProject(projectShortName) {
+            const project = byShortName.get(projectShortName);
+            return [
+                { title: '', prefix: '', items: project?.tags || [] }
+            ];
+        }
+
+        // initial
+        componentsDropdown.render(getComponentsGroupsForProject(projectSelect.value));
+        ignoredTagsDropdown.render(getTagsGroupsForProject(projectSelect.value), default_ignored_tags);
+
+        // project change
         projectSelect.addEventListener('change', () => {
-            renderComponentsMenu(projectSelect.value);
-        });
-
-        // Поиск по компонентам
-        componentSearch.addEventListener('input', (e) => {
-            filterComponents(e.target.value);
-        });
-
-        // Быстрые действия — по текущей фильтрации (только видимые)
-        btnSelectAll.addEventListener('click', () => {
-            componentMenu.querySelectorAll('.component-item:not(.d-none) .component-check').forEach(ch => ch.checked = true);
-            updateComponentButtonLabel();
-        });
-        btnClearAll.addEventListener('click', () => {
-            componentMenu.querySelectorAll('.component-item:not(.d-none) .component-check').forEach(ch => ch.checked = false);
-            updateComponentButtonLabel();
-        });
-
-        // Обновление лейбла при кликах
-        componentMenu.addEventListener('change', (e) => {
-            if (e.target.classList.contains('component-check')) {
-                updateComponentButtonLabel();
-            }
+            componentsDropdown.render(getComponentsGroupsForProject(projectSelect.value));
+            ignoredTagsDropdown.render(getTagsGroupsForProject(projectSelect.value), default_ignored_tags);
         });
 
         // Пресеты дат
@@ -402,7 +340,7 @@ limitations under the License.
         // Подстановка из URL
         (function applyParamsFromUrl() {
             const params = new URLSearchParams(window.location.search);
-            const hasAny = ['project', 'component', 'begin', 'end'].some(k => params.has(k));
+            const hasAny = ['project', 'component', 'begin', 'end', 'threshold_scope', 'threshold_value', 'ignored_tags'].some(k => params.has(k));
             if (!hasAny) return;
 
             // Проект
@@ -414,20 +352,21 @@ limitations under the License.
             projectSelect.value = selectedProject;
 
             // Компоненты под выбранный проект
-            renderComponentsMenu(selectedProject);
-
-            // Компоненты
+            componentsDropdown.render(getComponentsGroupsForProject(selectedProject));
             const raw = params.getAll('component').map(s => s.trim()).filter(Boolean);
             if (raw.length) {
-                const project = byShortName.get(selectedProject);
-                const allowed = new Set([
-                    ...normalizeList(SPECIAL_COMPONENTS),
-                    ...normalizeList(project?.components || [])
-                ]);
+                const allowed = componentsDropdown.getAllValuesSet();
                 const valid = raw.filter(v => allowed.has(v));
-                if (valid.length !== 0) {
-                    setSelectedComponents(valid);
-                }
+                if (valid.length) componentsDropdown.setSelected(valid);
+            }
+
+            // Игнорируемые теги
+            ignoredTagsDropdown.render(getTagsGroupsForProject(selectedProject));
+            const itags = params.getAll('ignored_tags').map(s => s.trim()).filter(Boolean);
+            if (itags.length) {
+                const allowed = ignoredTagsDropdown.getAllValuesSet();
+                const valid = itags.filter(v => allowed.has(v));
+                if (valid.length) ignoredTagsDropdown.setSelected(valid);
             }
 
             // Даты
@@ -437,16 +376,34 @@ limitations under the License.
                 dateFromEl.value = b;
                 dateToEl.value = e;
             }
+
+            const tms = params.get('threshold_scope');
+            const sth = params.get('threshold_value');
+            const hasAdvanced = (tms != null) || (sth != null);
+
+            if (hasAdvanced) {
+                // show collapse + set switch
+                if (typeof setAdvancedFiltersEnabled === 'function') {
+                    setAdvancedFiltersEnabled(true);
+                } else if (advancedFiltersSwitch) {
+                    advancedFiltersSwitch.checked = true;
+                }
+
+                if (targetMinScopeEl && tms != null) targetMinScopeEl.value = tms;
+                if (scopeThresholdEl && sth != null) scopeThresholdEl.value = sth;
+            } else {
+                if (typeof setAdvancedFiltersEnabled === 'function') {
+                    setAdvancedFiltersEnabled(false);
+                }
+            }
         })();
 
-        // Кнопка "Перейти к анализу"
         document.getElementById('analyze-btn').addEventListener('click', function () {
             const projectId = projectSelect.value;
-            const components = getSelectedComponents();
+            const components = componentsDropdown.getSelectedForUrl();
             const from = dateFromEl.value;
             const to = dateToEl.value;
 
-            // Валидация
             if (!projectId) {
                 showFormAlert('{{ _("batch.search.error.choose_project") }}', 'warning');
                 return;
@@ -469,6 +426,26 @@ limitations under the License.
             components.forEach(c => params.append('component', c));
             params.set('begin', from);
             params.set('end', to);
+            const ignoredTagsValues = ignoredTagsDropdown.getSelectedForUrl();
+            if(ignoredTagsValues.length){
+                ignoredTagsValues.forEach(t => params.append('ignored_tags', t));
+            } else {
+                // Add empty value to get correct values from backend in case of empty ignored tags
+                params.append('ignored_tags', '');
+            }
+
+            const advEnabled = !!(advancedFiltersSwitch && advancedFiltersSwitch.checked);
+            if (advEnabled) {
+                const targetMinScope = safeTrim(targetMinScopeEl?.value);
+                const scopeThresshold = safeTrim(scopeThresholdEl?.value);
+
+                if (!targetMinScope || !scopeThresshold) {
+                    showFormAlert('Both values should be filled', 'warning');
+                    return;
+                }
+                params.set('threshold_scope', targetMinScope);
+                params.set('threshold_value', scopeThresshold);
+            }
 
             window.location.href = `${window.location.pathname}?${params.toString()}`;
         });
